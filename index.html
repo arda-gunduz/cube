@@ -87,8 +87,8 @@
       <!-- Music Hotel -->
 
       <a-sound
-        id="hotel-music"
-        src="#music-modern"
+        id="musicmodern"
+        src="#musicmodern"
         autoplay="true"
         loop="true"
         positional="false"
@@ -104,8 +104,8 @@
 
         scene.addEventListener("loaded", function () {
           setTimeout(function () {
-            const sound = document.querySelector("#hotel-music");
-            const audioEl = document.querySelector("#music-modern");
+            const sound = document.querySelector("#musicmodern");
+            const audioEl = document.querySelector("#musicmodern");
 
             // Forcer le volume à 0.3
             if (audioEl) {
