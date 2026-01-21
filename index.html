@@ -14,29 +14,63 @@
           src="assets/DeskModern.glb"
         ></a-asset-item>
 
-        <a-asset-item
-          id="DeskBell"
-          src="assets/DeskBell.glb"
-        ></a-asset-item>
-      </a-assets>
-        <a-asset-item
-          id="bell"
-          src="assets/bell.glb"
-        ></a-asset-item>
+        <a-asset-item id="DeskBell" src="assets/DeskBell.glb"></a-asset-item>
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
-<a-entity gltf-model="assets/DeskModern.glb" position="1.76873 1.23358 -7.44738" scale="0.05 0.04 0.05"></a-entity>      
-<a-entity gltf-model="assets/DeskBell.glb" position="1.80117 1.45097 -5.941" scale="10 10 10" material="color: red"></a-entity>      
-<a-entity gltf-model="assets/bell.glb" position="1.80117 1.45097 -5.941" scale="10 10 10" material="color: red"></a-entity>      
-<a-plane
-        position="0 0 -4"
-        rotation="-90 0 0"
-        width="4"
-        height="4"
-        color="#7BC8A4"
+      <a-entity
+        id="le-bureau"
+        gltf-model="assets/DeskModern.glb"
+        position="-0.08836 0.89162 -7.44738"
+        scale="0.05 0.04 0.05"
+      >
+      </a-entity>
+      <a-entity
+        id="la-sonnette"
+        gltf-model="assets/DeskBell.glb"
+        position="-0.12291 1.10928 -5.941"
         scale="10 10 10"
-      ></a-plane>
+        material="color: red"
+      ></a-entity>
+      <!-- Structure Hotel -->
+      <a-plane
+        id="sol-principal"
+        position="0 0 0"
+        rotation="-90 0 0"
+        width="40"
+        height="40"
+        color="#CCCCCC"
+      >
+      </a-plane>
+
+      <a-box
+        id="mur-fond"
+        position="0 4 -9.70982"
+        width="20"
+        height="8"
+        depth="0.5"
+        color="#AAAAAA"
+      >
+      </a-box>
+      <a-box
+        id="mur-gauche"
+        position="-10 4 0"
+        rotation="0 90 0"
+        width="20"
+        height="8"
+        depth="0.5"
+        color="#999"
+      ></a-box>
+      <a-box
+        id="mur-droit"
+        position="10 4 0"
+        rotation="0 90 0"
+        width="20"
+        height="8"
+        depth="0.5"
+        color="#999"
+      ></a-box>
+
       <a-sky color="#ECECEC"></a-sky>
     </a-scene>
     <script type="module" src="/src/main.js"></script>
