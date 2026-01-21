@@ -11,29 +11,30 @@
       <a-assets>
         <audio
           id="musicmodern"
-          src="/assets/musicmodern.mp3"
+          src="assets/MusicModern.mp3"
           preload="auto"
           loop="true"
         ></audio>
 
         <a-asset-item
           id="deskmodern"
-          src="/assets/deskmodern.glb"
+          src="assets/DeskModern.glb"
         ></a-asset-item>
 
-        <a-asset-item id="deskbell" src="/assets/deskbell.glb"></a-asset-item>
+        <a-asset-item id="DeskBell" src="assets/DeskBell.glb"></a-asset-item>
 
         <a-asset-item
-          id="stairsmodern"
-          src="/assets/stairsmodern.glb"
+          id="StairsModern"
+          src="assets/StairsModern.glb"
         ></a-asset-item>
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
-      <a-entity id="le-bureau" gltf-model="#deskmodern" position="-0.08836 0.89162 -7.16339" scale="0.04 0.04 0.05">
+      <a-entity id="le-bureau" gltf-model="assets/DeskModern.glb" position="-0.08836 0.89162 -7.16339" scale="0.04 0.04 0.05">
       </a-entity>
-      <a-entity id="la-sonnette" gltf-model="#deskbell" position="-0.12291 1.10928 -5.50302" scale="10 10 10" material="color: red"></a-entity>
-      <a-entity id="stairsmodern" gltf-model="#stairsmodern" position="5.97734 -0.08261 -1.918" scale="0.25 0.25 0.25" rotation="1.03017811564522 -90 0.6199403343315507"></a-entity>
+      </a-entity>
+      <a-entity id="la-sonnette" gltf-model="assets/DeskBell.glb" position="-0.12291 1.10928 -5.50302" scale="10 10 10" material="color: red"></a-entity>
+     <a-entity id="StairsModern" gltf-model="assets/StairsModern.glb" position="5.97734 -0.08261 -1.918" scale="0.25 0.25 0.25" rotation="1.03017811564522 -90 0.6199403343315507"></a-entity>
       <!-- Structure Hotel -->
       <a-plane
         id="sol-principal"
@@ -87,11 +88,11 @@
 
       <a-sound
         id="hotel-music"
-        src="#musicmodern"
+        src="#music-modern"
         autoplay="true"
         loop="true"
         positional="false"
-        volume="0.5"   
+        volume="0.3"   
       >
       </a-sound>
     </a-scene>
@@ -104,11 +105,11 @@
         scene.addEventListener("loaded", function () {
           setTimeout(function () {
             const sound = document.querySelector("#hotel-music");
-            const audioEl = document.querySelector("#musicmodern");
+            const audioEl = document.querySelector("#music-modern");
 
-            // Forcer le volume à 0.5
+            // Forcer le volume à 0.3
             if (audioEl) {
-              audioEl.volume = 0.5;
+              audioEl.volume = 0.3;
             }
 
             // Essayer de lancer avec A-Frame
@@ -122,7 +123,7 @@
                 .play()
                 .catch((err) => console.log("Autoplay bloqué:", err));
             }
-          }, 1000);
+          }, 500);
         });
       });
 
