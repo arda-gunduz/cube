@@ -107,11 +107,10 @@
         autoplay="true"
         loop="true"
         positional="false"
-        volume="0.5"
+        volume="0.3"   
       >
       </a-sound>
     </a-scene>
-
 
     <script>
       // Forcer le lancement automatique de la musique
@@ -122,6 +121,11 @@
           setTimeout(function () {
             const sound = document.querySelector("#hotel-music");
             const audioEl = document.querySelector("#music-modern");
+
+            // Forcer le volume à 0.3
+            if (audioEl) {
+              audioEl.volume = 0.3;
+            }
 
             // Essayer de lancer avec A-Frame
             if (sound && sound.components.sound) {
@@ -134,47 +138,10 @@
                 .play()
                 .catch((err) => console.log("Autoplay bloqué:", err));
             }
-
-            // Cacher le bouton si ça marche
-            const btn = document.getElementById("play-music");
-            if (audioEl && !audioEl.paused) {
-              btn.style.display = "none";
-            }
           }, 500);
         });
       });
 
-      // Bouton de secours
-      document
-        .getElementById("play-music")
-        .addEventListener("click", function () {
-          const sound = document.querySelector("#hotel-music");
-          const audioEl = document.querySelector("#music-modern");
-
-          if (sound && sound.components.sound) {
-            sound.components.sound.playSound();
-          }
-          if (audioEl) {
-            audioEl.play();
-          }
-
-          this.textContent = "🔊 Musique en cours";
-          this.disabled = true;
-          this.style.background = "#888";
-        });
-
-      // Tenter de lancer au premier clic sur la page
-      document.addEventListener(
-        "click",
-        function autoplay() {
-          const audioEl = document.querySelector("#music-modern");
-          if (audioEl && audioEl.paused) {
-            audioEl.play().catch(() => {});
-          }
-          document.removeEventListener("click", autoplay);
-        },
-        { once: true },
-      );
     </script>
     <script type="module" src="/src/main.js"></script>
   </body>
