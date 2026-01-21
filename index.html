@@ -15,6 +15,12 @@
         ></a-asset-item>
 
         <a-asset-item id="DeskBell" src="assets/DeskBell.glb"></a-asset-item>
+        <audio
+          id="music-modern"
+          src="assets/MusicModern.mp3"
+          preload="auto"
+          loop="true"
+        ></audio>
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
@@ -71,8 +77,91 @@
         color="#999"
       ></a-box>
 
+      <a-plane
+        position="0 8 0"
+        rotation="90 0 0"
+        width="40"
+        height="40"
+        color="#FFF"
+      ></a-plane>
+
       <a-sky color="#ECECEC"></a-sky>
+
+      <!-- Music Hotel -->
+
+      <a-sound
+        id="hotel-music"
+        src="#music-modern"
+        autoplay="true"
+        loop="true"
+        positional="false"
+        volume="0.5"
+      >
+      </a-sound>
     </a-scene>
+    
+    <!-- Bouton pour démarrer la musique -->
+    <div style="position: fixed; top: 20px; left: 20px; z-index: 1000;">
+      <button id="play-music" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px;">
+        🔊 Lancer la musique
+      </button>
+    </div>
+    
+    <script>
+      // Forcer le lancement automatique de la musique
+      document.addEventListener('DOMContentLoaded', function() {
+        const scene = document.querySelector('a-scene');
+        
+        scene.addEventListener('loaded', function() {
+          setTimeout(function() {
+            const sound = document.querySelector('#hotel-music');
+            const audioEl = document.querySelector('#music-modern');
+            
+            // Essayer de lancer avec A-Frame
+            if (sound && sound.components.sound) {
+              sound.components.sound.playSound();
+            }
+            
+            // Essayer de lancer directement l'élément audio HTML
+            if (audioEl) {
+              audioEl.play().catch(err => console.log('Autoplay bloqué:', err));
+            }
+            
+            // Cacher le bouton si ça marche
+            const btn = document.getElementById('play-music');
+            if (audioEl && !audioEl.paused) {
+              btn.style.display = 'none';
+            }
+          }, 500);
+        });
+      });
+      
+      // Bouton de secours
+      document.getElementById('play-music').addEventListener('click', function() {
+        const sound = document.querySelector('#hotel-music');
+        const audioEl = document.querySelector('#music-modern');
+        
+        if (sound && sound.components.sound) {
+          sound.components.sound.playSound();
+        }
+        if (audioEl) {
+          audioEl.play();
+        }
+        
+        this.textContent = '🔊 Musique en cours';
+        this.disabled = true;
+        this.style.background = '#888';
+      });
+      
+      // Tenter de lancer au premier clic sur la page
+      document.addEventListener('click', function autoplay() {
+        const audioEl = document.querySelector('#music-modern');
+        if (audioEl && audioEl.paused) {
+          audioEl.play().catch(() => {});
+        }
+        document.removeEventListener('click', autoplay);
+      }, { once: true });
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
