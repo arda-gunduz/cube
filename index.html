@@ -10,42 +10,32 @@
     <a-scene>
       <a-assets>
         <audio
-          id="music-modern"
-          src="assets/MusicModern.mp3"
+          id="musicmodern"
+          src="assets/musicmodern.mp3"
           preload="auto"
           loop="true"
         ></audio>
 
         <a-asset-item
           id="deskmodern"
-          src="assets/DeskModern.glb"
+          src="assets/deskmodern.glb"
         ></a-asset-item>
 
-        <a-asset-item id="DeskBell" src="assets/DeskBell.glb"></a-asset-item>
+        <a-asset-item id="deskbell" src="assets/deskbell.glb"></a-asset-item>
 
         <a-asset-item
-          id="StairsModern"
-          src="assets/StairsModern.glb"
+          id="stairsmodern"
+          src="assets/stairsmodern.glb"
         ></a-asset-item>
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
-      <a-entity
-        id="le-bureau"
-        gltf-model="assets/DeskModern.glb"
-        position="-0.08836 0.89162 -7.44738"
-        scale="0.05 0.04 0.05"
-      >
+      <a-entity id="le-bureau" gltf-model="assets/deskmodern.glb" position="-0.08836 0.89162 -7.16339" scale="0.04 0.04 0.05">
       </a-entity>
+      </a-entity>
+      <a-entity id="la-sonnette" gltf-model="assets/deskbell.glb" position="-0.12291 1.10928 -5.50302" scale="10 10 10" material="color: red"></a-entity>
       <a-entity
-        id="la-sonnette"
-        gltf-model="assets/DeskBell.glb"
-        position="-0.12291 1.10928 -5.941"
-        scale="10 10 10"
-        material="color: red"
-      ></a-entity>
-      <a-entity
-        id="StairsModern"
+        id="stairsmodern"
         gltf-model="assets/StairsModern.glb"
         position="-0.12291 1.10928 -5.941"
         scale="10 10 10"
@@ -103,7 +93,7 @@
 
       <a-sound
         id="hotel-music"
-        src="#music-modern"
+        src="#musicmodern"
         autoplay="true"
         loop="true"
         positional="false"
