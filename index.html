@@ -13,12 +13,15 @@
           id="deskmodern"
           src="assets/DeskModern.glb"
         ></a-asset-item>
+        <a-asset-item
+          id="deskbell"
+          src="assets/DeskBell.glb"
+        ></a-asset-item>
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
-
-      <a-gltf-model src="#deskmodern" position="2.17479 0 -6.984" gltf-model="assets/DeskModern.glb" scale="1.5 0.9 0.95">
-      </a-gltf-model>
+      <a-entity gltf-model="assets/DeskModern.glb" position="1.76873 1.46478 -7.44738" scale="0.05 0.05 0.05"></a-entity>
+      <a-entity gltf-model="assets/DeskBell.glb" position="1.5 1.2 -6.5" scale="0.02 0.02 0.02"></a-entity>
       <a-plane
         position="0 0 -4"
         rotation="-90 0 0"
