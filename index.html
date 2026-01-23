@@ -9,146 +9,121 @@
   <body>
     <a-scene>
       <a-assets>
-        <audio
-          id="musicmodern"
-          src="assets/MusicModern.mp3"
-          preload="auto"
-          loop="true"
-        ></audio>
-
-        <a-asset-item
-          id="deskmodern"
-          src="assets/DeskModern.glb"
-        ></a-asset-item>
-
-        <a-asset-item id="DeskBell" src="assets/DeskBell.glb"></a-asset-item>
-
-        <a-asset-item
-          id="SourisClavier"
-          src="assets/SourisClavier.glb"
-        ></a-asset-item>
-
-        <a-asset-item
-          id="iMac"
-          src="assets/iMac.glb"
-        ></a-asset-item>
- 
-        <a-asset-item
-          id="StairsModern"
-          src="assets/StairsModern.glb"
-        ></a-asset-item>
+        <audio id="audio-music-modern" src="assets/MusicModern.mp3" preload="auto" loop="true"></audio>
+        
+        <a-asset-item id="asset-desk" src="assets/DeskModern.glb"></a-asset-item>
+        <a-asset-item id="asset-bell" src="assets/DeskBell.glb"></a-asset-item>
+        <a-asset-item id="asset-periph" src="assets/SourisClavier.glb"></a-asset-item>
+        <a-asset-item id="asset-imac" src="assets/iMac.glb"></a-asset-item>
+        <a-asset-item id="asset-stairs" src="assets/StairsModern.glb"></a-asset-item>
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
-      <a-entity id="le-bureau" gltf-model="assets/DeskModern.glb" position="-0.08836 0.89162 -7.16339" scale="0.04 0.04 0.05">
+
+      <!-- BUREAU -->
+
+    <a-entity 
+        id="le-bureau" 
+        gltf-model="#asset-desk" 
+        position="-0.088 0.891 -7.163" 
+        scale="0.04 0.04 0.05">
       </a-entity>
+
+      <a-entity 
+        id="la-sonnette" 
+        gltf-model="#asset-bell" 
+        position="-0.122 1.109 -5.503" 
+        scale="10 10 10">
       </a-entity>
-      <a-entity id="la-sonnette" gltf-model="assets/DeskBell.glb" position="-0.12291 1.10928 -5.50302" scale="10 10 10" material="color: red"></a-entity>
-<a-entity id="SourisClavier" gltf-model="assets/SourisClavier.glb" position="-1.16623 -1.69219 -6.64064" scale="3 3 3" material="color: red" rotation="0 180 0"></a-entity>
-<a-entity id="iMac" gltf-model="assets/iMac.glb" position="-1.54173 1.12 -5.828" scale="0.3 0.3 0.3" material="color: red" rotation="0 -15.6514880895887 0"></a-entity>
-<a-entity id="SourisClavier" gltf-model="assets/SourisClavier.glb" position="1.294 -1.69219 -6.64064" scale="3 3 3" material="color: red" rotation="0 180 0"></a-entity>
-<a-entity id="iMac" gltf-model="assets/iMac.glb" position="1.31943 1.12 -5.828" scale="0.3 0.3 0.3" material="color: red" rotation="0 12.883528981311692 0"></a-entity><!-- Structure Hotel -->
-      <a-plane
-        id="sol-principal"
-        position="0 0 0"
-        rotation="-90 0 0"
-        width="40"
-        height="40"
-        color="#CCCCCC"
-      >
-      </a-plane>
 
-      <a-box
-        id="mur-fond"
-        position="0 4 -9.70982"
-        width="20"
-        height="8"
-        depth="0.5"
-        color="#AAAAAA"
-      >
-      </a-box>
-      <a-box
-        id="mur-gauche"
-        position="-10 4 0"
-        rotation="0 90 0"
-        width="20"
-        height="8"
-        depth="0.5"
-        color="#999"
-      ></a-box>
-      <a-box
-        id="mur-droit"
-        position="10 4 0"
-        rotation="0 90 0"
-        width="20"
-        height="8"
-        depth="0.5"
-        color="#999"
-      ></a-box>
 
-      <a-plane
-        position="0 8 0"
-        rotation="90 0 0"
-        width="40"
-        height="40"
-        color="#FFF"
-      ></a-plane>
+      <a-entity 
+        id="periph-gauche" 
+        gltf-model="#asset-periph" 
+        position="-1.166 -1.692 -6.640" 
+        scale="3 3 3" 
+        rotation="0 180 0">
+      </a-entity>
+      <a-entity 
+        id="imac-gauche" 
+        gltf-model="#asset-imac" 
+        position="-1.541 1.12 -5.828" 
+        scale="0.3 0.3 0.3" 
+        rotation="0 -15.65 0">
+      </a-entity>
 
-<a-entity id="StairsModern" gltf-model="assets/StairsModern.glb" position="6.302 -0.08261 -0.32834" scale="0.32 0.25 0.25" rotation="1.03017811564522 -90 0.6199403343315507">
-</a-entity>
-<a-entity id="StairsModern1.1" gltf-model="assets/StairsModern.glb" position="6.302 -0.1005 -1.97628" scale="-0.32 0.25 0.25" rotation="1.03017811564522 -90 0.6199403343315507">
-</a-entity>
-<a-box id="mur-stairs-1" position="7.49761 4 6.19177" rotation="0 90 0" width="20" height="8" depth="0.5" color="#999" geometry="depth: 3; width: 11.61"></a-box>
-<a-box id="mur-stairs-2" position="7.99503 4 -6.73525" rotation="0 90 0" width="20" height="8" depth="0.5" color="#999" geometry="depth: 4; width: 8"></a-box>
-<a-entity id="StairsModern2" gltf-model="assets/StairsModern.glb" position="-6.302 -0.1005 -0.37119" scale="-0.32 0.25 0.25" rotation="1.03017811564522 90 0.6199403343315507">
-</a-entity>
-<a-entity id="StairsModern2.1" gltf-model="assets/StairsModern.glb" position="-6.302 -0.08261 -2.0011" scale="0.32 0.25 0.25" rotation="1.03017811564522 90 0.6199403343315507">
-</a-entity>
-<a-box id="mur-stairs2-1" position="-7.49761 4 6.19177" rotation="0 90 0" width="20" height="8" depth="0.5" color="#999" geometry="depth: 3; width: 11.61"></a-box>
-<a-box id="mur-stairs2-2" position="-7.99503 4 -6.73525" rotation="0 90 0" width="20" height="8" depth="0.5" color="#999" geometry="depth: 4; width: 8"></a-box>      <!-- Sound Hotel -->
+      <a-entity 
+        id="periph-droit" 
+        gltf-model="#asset-periph" 
+        position="1.294 -1.692 -6.640" 
+        scale="3 3 3" 
+        rotation="0 180 0">
+      </a-entity>
+      <a-entity 
+        id="imac-droit" 
+        gltf-model="#asset-imac" 
+        position="1.319 1.12 -5.828" 
+        scale="0.3 0.3 0.3" 
+        rotation="0 12.88 0">
+      </a-entity>
 
-      <a-sound
-        id="musicmodern"
-        src="#musicmodern"
-        autoplay="true"
-        loop="true"
-        positional="false"
-        volume="0.3"    
-      >
+      <!-- STRUCTURE -->
+
+      <a-plane id="sol-principal" position="0 0 0" rotation="-90 0 0" width="40" height="40" color="#CCCCCC"></a-plane>
+      <a-plane id="plafond" position="0 8 0" rotation="90 0 0" width="40" height="40" color="#FFF"></a-plane>
+
+      <a-box id="mur-fond" position="0 4 -9.70" width="20" height="8" depth="0.5" color="#AAAAAA"></a-box>
+      <a-box id="mur-gauche" position="-10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5" color="#999"></a-box>
+      <a-box id="mur-droit" position="10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5" color="#999"></a-box>
+
+
+      <a-entity id="escalier-droit-bas" gltf-model="#asset-stairs" position="6.302 -0.08 -0.32" scale="0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
+      <a-entity id="escalier-droit-haut" gltf-model="#asset-stairs" position="6.302 -0.10 -1.97" scale="-0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
+      
+      <a-box id="mur-stairs-d-1" position="7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3" color="#999"></a-box>
+      <a-box id="mur-stairs-d-2" position="7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4" color="#999"></a-box>
+
+      <a-entity id="escalier-gauche-bas" gltf-model="#asset-stairs" position="-6.302 -0.10 -0.37" scale="-0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
+      <a-entity id="escalier-gauche-haut" gltf-model="#asset-stairs" position="-6.302 -0.08 -2.00" scale="0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
+      
+      <a-box id="mur-stairs-g-1" position="-7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3" color="#999"></a-box>
+      <a-box id="mur-stairs-g-2" position="-7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4" color="#999"></a-box>
+
+      <!-- SONS -->
+
+      <a-sound 
+        id="sound-emitter" 
+        src="#audio-music-modern" 
+        autoplay="true" 
+        loop="true" 
+        positional="false" 
+        volume="0.3">
       </a-sound>
+
     </a-scene>
 
+<script type="module" src="/src/main.js"></script>
     <script>
-      // Forcer le lancement automatique de la musique
-      document.addEventListener("DOMContentLoaded", function () {
+      // Force le son à se lancer après l'initialisation d'A-Frame
+      window.addEventListener('load', function () {
         const scene = document.querySelector("a-scene");
-
-        scene.addEventListener("loaded", function () {
-          setTimeout(function () {
-            const sound = document.querySelector("#musicmodern");
-            const audioEl = document.querySelector("#musicmodern");
-
-            // Forcer le volume à 0.3
-            if (audioEl) {
-              audioEl.volume = 0.3;
+        if (scene.hasLoaded) {
+          initSound();
+        } else {
+          scene.addEventListener("loaded", initSound);
+        }
+        
+        function initSound() {
+          // Débloquer le son au premier clic (requis par les navigateurs)
+          document.body.addEventListener('click', function playAudio() {
+            const soundEntity = document.querySelector("#sound-emitter");
+            if (soundEntity && soundEntity.components && soundEntity.components.sound) {
+              soundEntity.components.sound.playSound();
+              console.log("Son activé");
             }
-
-            // Essayer de lancer avec A-Frame
-            if (sound && sound.components.sound) {
-              sound.components.sound.playSound();
-            }
-
-            // Essayer de lancer directement l'élément audio HTML
-            if (audioEl) {
-              audioEl
-                .play()
-                .catch((err) => console.log("Autoplay bloqué:", err));
-            }
-          }, 500);
-        });
+          }, { once: true });
+        }
       });
-
     </script>
-    <script type="module" src="/src/main.js"></script>
   </body>
 </html>
