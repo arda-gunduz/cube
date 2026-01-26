@@ -19,6 +19,9 @@
         <a-asset-item id="asset-entrance-modern" src="assets/EntranceModern.glb"></a-asset-item>
         
         <a-asset-item id="asset-light-modern" src="assets/LightModern.glb"></a-asset-item>
+      <img id="tex-mount-modern" src="assets/MountModern.png">
+      <img id="tex-mount-old" src="assets/MountOld.png">
+      
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
@@ -115,6 +118,26 @@
       <a-entity light="type: ambient; color: #FFF; intensity: 0.5"></a-entity>
       <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="0 10 5"></a-entity>
       <a-entity light="type: hemisphere; color: #FFF; groundColor: #888; intensity: 0.4"></a-entity>
+
+
+      <!-- DECOR EXT-->
+<a-plane
+        id="decor-exterieur"
+        src="#tex-mount-modern"
+        position="0 -20 40" 
+        rotation="0 180 0"
+        width="100"
+        height="60"
+        material="shader: flat; fog: false">
+      </a-plane>
+
+      <a-box 
+        position="0 4 5" 
+        width="30" height="10" depth="1" 
+        color="#333" 
+        side="back"
+        visible="false"> </a-box>
+
 
       <!-- CAMERA -->
 <a-entity id="camera-rig" position="0 1.7 -2.75">
