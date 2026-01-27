@@ -25,8 +25,11 @@
         <img id="tex-mount-modern" src="assets/MountModern.png">
       <img id="tex-mount-old" src="assets/MountOld.png">
   <img id="tex-sol-modern" src="assets/SolModern.jpg">
+  <img id="tex-sol-old" src="assets/SolOld.jpg">
   <img id="tex-mur-modern" src="assets/MurModern.jpg">
+  <img id="tex-mur-old" src="assets/MurOld.jpg">
   <img id="tex-plafond-modern" src="assets/PlafondModern.jpg">
+  <img id="tex-plafond-old" src="assets/PlafondOld.jpg">
       </a-assets>
 
       <!-- Utilisation du modèle GLTF -->
@@ -94,7 +97,7 @@
       
 
       <a-plane id="base" position="0 -0.82283 0" rotation="-90 0 0" width="40" height="40" color="#CCCCCC"></a-plane>
-<a-plane id="plafond" position="0 6 1.27847" rotation="90 0 0" width="40" height="40" color="#FFF" geometry="height: 22; width: 24"></a-plane>
+<a-plane id="plafond"         src="#tex-plafond-modern"  position="0 6 1.27847" rotation="90 0 0" width="40" height="40" color="#FFF" geometry="height: 22; width: 24"></a-plane>
 <a-plane id="base-up" position="0 8 0" rotation="90 0 0" width="40" height="40" color="#FFF"></a-plane>
 
      <a-box 
@@ -180,7 +183,7 @@
 
 
       <!-- CAMERA -->
-<a-entity id="camera-rig" position="0 1.0 -2.75">
+<a-entity id="camera-rig" position="0 0.5 -2.75">
     
     <a-entity camera look-controls wasd-controls>
         
