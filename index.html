@@ -13,8 +13,11 @@
   <a-scene light="defaultLightsEnabled: false">
     <a-assets>
       <audio id="audio-music-modern" src="assets/MusicModern.mp3" preload="auto" loop="true"></audio>
+      <audio id="audio-music-Old" src="assets/MusicOld.mp3" preload="auto" loop="true"></audio>
+      <audio id="audio-bell-ring" src="assets/BellRing.wav"></audio>
 
       <a-asset-item id="asset-desk-modern" src="assets/DeskModern.glb"></a-asset-item>
+      <a-asset-item id="asset-desk-old" src="assets/DeskOld.glb"></a-asset-item>
       <a-asset-item id="asset-bell" src="assets/DeskBell.glb"></a-asset-item>
       <a-asset-item id="asset-periph" src="assets/SourisClavier.glb"></a-asset-item>
       <a-asset-item id="asset-imac" src="assets/iMac.glb"></a-asset-item>
@@ -39,10 +42,13 @@
 
     <!-- BUREAU -->
 
-    <a-entity id="le-bureau" gltf-model="#asset-desk-modern" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05">
+    <a-entity id="le-bureau-modern" gltf-model="#asset-desk-modern" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05">
+    </a-entity>
+    
+    <a-entity id="le-bureau-old" gltf-model="#asset-desk-old" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05" visible="false">
     </a-entity>
 
-    <a-entity id="la-sonnette" position="-0.122 1.109 -5.503" time-travel="startModern: true">
+    <a-entity id="la-sonnette" position="-0.122 1.109 -5.503" time-travel="startModern: false">
       <a-entity gltf-model="#asset-bell" scale="10 10 10"></a-entity>
       <a-sphere class="clickable" radius="0.15" material="transparent: true; opacity: 0" position="0 0 0"></a-sphere>
     </a-entity>
@@ -177,6 +183,14 @@
         // On écoute le clic sur la sonnette
         this.el.addEventListener('click', () => {
           console.log('🔔 CLIC SUR LA SONNETTE!');
+          
+          // Jouer le son de la sonnette
+          const bellAudio = document.querySelector('#audio-bell-ring');
+          if (bellAudio) {
+            bellAudio.currentTime = 0; // Remettre au début
+            bellAudio.play().catch(e => console.error('Erreur lecture sonnette:', e));
+          }
+          
           this.isModern = !this.isModern; // On inverse l'état (Vrai -> Faux -> Vrai)
           this.updateScene();
         });
@@ -214,16 +228,29 @@
         // (Plus tard tu créeras un #groupe-elements-vintage et tu feras l'inverse : !isModern)
 
         // 3. GESTION DE LA MUSIQUE
-        const soundEmitter = document.querySelector('#sound-emitter');
-        // Ici on change la source de la musique
-        // (Assure-toi d'avoir un fichier MusicOld.mp3 ou utilise le même pour l'instant)
-        const newTrack = isModern ? '#audio-music-modern' : '#audio-music-modern'; // Remplace le 2ème par '#audio-music-old' quand tu l'auras
-
-        if (soundEmitter.getAttribute('src') !== newTrack) {
-          soundEmitter.setAttribute('src', newTrack);
-          // On demande à A-Frame de recharger le son
-          soundEmitter.components.sound.stopSound();
-          soundEmitter.components.sound.playSound();
+        const audioModern = document.querySelector('#audio-music-modern');
+        const audioOld = document.querySelector('#audio-music-Old');
+        
+        console.log('🎵 Changement de musique:', isModern ? 'Modern' : 'Old');
+        
+        if (isModern) {
+          // Passer en mode moderne
+          if (audioOld) {
+            audioOld.pause();
+            audioOld.currentTime = 0;
+          }
+          if (audioModern) {
+            audioModern.play().catch(e => console.error('Erreur MusicModern:', e));
+          }
+        } else {
+          // Passer en mode ancien
+          if (audioModern) {
+            audioModern.pause();
+            audioModern.currentTime = 0;
+          }
+          if (audioOld) {
+            audioOld.play().catch(e => console.error('Erreur MusicOld:', e));
+          }
         }
       }
     });
@@ -231,40 +258,45 @@
     // Force le son à se lancer après l'initialisation d'A-Frame
     document.addEventListener('DOMContentLoaded', function () {
       const scene = document.querySelector("a-scene");
+      let audioStarted = false;
       
       scene.addEventListener("loaded", function() {
         console.log('🎬 Scène A-Frame chargée');
         
-        // Débloquer le son au premier clic (requis par les navigateurs)
-        let audioStarted = false;
-        
         function startAudio() {
           if (audioStarted) return;
           
-          const soundEntity = document.querySelector("#sound-emitter");
-          console.log('🔊 Tentative de lancement du son...', soundEntity);
+          console.log('🔊 Tentative de lancement du son...');
           
+          // Essayer de lancer avec A-Frame sound component
+          const soundEntity = document.querySelector("#sound-emitter");
           if (soundEntity && soundEntity.components && soundEntity.components.sound) {
             try {
               soundEntity.components.sound.playSound();
               audioStarted = true;
-              console.log("✅ Son activé avec succès!");
+              console.log("✅ Son A-Frame activé avec succès!");
             } catch(e) {
-              console.error("❌ Erreur lors du lancement du son:", e);
+              console.error("❌ Erreur A-Frame son:", e);
             }
-          } else {
-            console.warn("⚠️ Composant son non trouvé");
+          }
+          
+          // Alternative: lancer directement l'audio HTML5
+          const audioModern = document.querySelector('#audio-music-modern');
+          const audioOld = document.querySelector('#audio-music-Old');
+          
+          if (audioModern) {
+            audioModern.play().then(() => {
+              console.log("✅ MusicModern lancée!");
+              audioStarted = true;
+            }).catch(e => console.error("❌ Erreur MusicModern:", e));
           }
         }
         
-        // Essayer de lancer le son au premier clic n'importe où
-        document.addEventListener('click', startAudio, { once: true });
-        
-        // Essayer aussi au premier mouvement de souris
-        document.addEventListener('mousemove', startAudio, { once: true });
+        // Essayer de lancer le son au premier clic
+        document.addEventListener('click', startAudio, { once: false });
         
         // Message pour l'utilisateur
-        console.log('👆 Cliquez ou bougez la souris pour activer le son');
+        console.log('👆 Cliquez pour activer le son');
       });
     });
   </script>
