@@ -1,200 +1,161 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grand Budapest Hotel - Final</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reception - Optimized</title>
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-</head>
+    <script>
+      AFRAME.registerComponent('time-travel', {
+        schema: { startModern: { type: 'boolean', default: true } },
+        init: function () {
+          this.isModern = this.data.startModern;
+          this.audioBell = document.querySelector('#audio-bell-ring');
+          this.audioModern = document.querySelector('#audio-music-modern');
+          this.audioOld = document.querySelector('#audio-music-old');
 
-<body>
-  <a-scene 
-    renderer="colorManagement: true; sortObjects: true" 
-    light="defaultLightsEnabled: false" 
-    loading-screen="enabled: true">
-    
-    <a-assets timeout="10000">
-      <audio id="audio-music-modern" src="assets/MusicModern.mp3" preload="auto" loop="true"></audio>
-      <audio id="audio-music-old" src="assets/MusicOld.mp3" preload="auto" loop="true"></audio>
-      <audio id="audio-bell-ring" src="assets/BellRing.wav" preload="auto"></audio>
+          // On lance la scène
+          if (this.el.sceneEl.hasLoaded) { this.updateScene(); } 
+          else { this.el.sceneEl.addEventListener('loaded', () => this.updateScene()); }
 
-      <a-asset-item id="asset-desk-modern" src="assets/DeskModern.glb"></a-asset-item>
-      <a-asset-item id="asset-desk-old" src="assets/DeskOld.glb"></a-asset-item>
-      <a-asset-item id="asset-bell" src="assets/DeskBell.glb"></a-asset-item>
-      <a-asset-item id="asset-periph" src="assets/SourisClavier.glb"></a-asset-item>
-      <a-asset-item id="asset-imac" src="assets/iMac.glb"></a-asset-item>
-      <a-asset-item id="asset-stairs-modern" src="assets/StairsModern.glb"></a-asset-item>
-      <a-asset-item id="asset-entrance-modern" src="assets/EntranceModern.glb"></a-asset-item>
-      <a-asset-item id="asset-light-modern" src="assets/LightModern.glb"></a-asset-item>
+          this.el.addEventListener('click', () => {
+            if (this.audioBell) { this.audioBell.currentTime = 0; this.audioBell.play().catch(e=>{}); }
+            this.isModern = !this.isModern;
+            this.updateScene();
+          });
+        },
 
-      <img id="tex-mount-modern" src="assets/MountModern.png">
-      <img id="tex-mount-old" src="assets/MountOld.png">
-      <img id="tex-sol-modern" src="assets/SolModern.jpg">
-      <img id="tex-sol-old" src="assets/SolOld.jpg">
-      <img id="tex-mur-modern" src="assets/MurModern.jpg">
-      <img id="tex-mur-old" src="assets/MurOld.jpg">
-      <img id="tex-plafond-modern" src="assets/PlafondModern.jpg">
-      <img id="tex-plafond-old" src="assets/PlafondOld.jpg">
-    </a-assets>
+        updateScene: function () {
+          const isModern = this.isModern;
+          const setSrc = (id, src) => { const el = document.querySelector(id); if(el) el.setAttribute('src', src); };
+          const setVisible = (id, viz) => { const el = document.querySelector(id); if(el) el.setAttribute('visible', viz); };
 
-    <a-entity light="type: ambient; color: #FFF; intensity: 0.1"></a-entity>
-    
-    <a-entity light="type: directional; color: #FFFAF0; intensity: 0.5; castShadow: false" position="0 10 5"></a-entity>
+          // 1. Textures
+          setSrc('#sol-principal', isModern ? '#tex-sol-modern' : '#tex-sol-old');
+          setSrc('#plafond', isModern ? '#tex-plafond-modern' : '#tex-plafond-old');
+          setSrc('#decor-exterieur', isModern ? '#tex-mount-modern' : '#tex-mount-old');
 
-    <a-entity id="light-modern" gltf-model="#asset-light-modern" position="-4.19 5.942 -5" scale="0.5 0.5 0.5">
-       <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
-    </a-entity>
-    
-    <a-entity id="light-modern-2" gltf-model="#asset-light-modern" position="3.909 5.942 -5" scale="0.5 0.5 0.5">
-       <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
-    </a-entity>
-    
-    <a-entity id="light-modern-3" gltf-model="#asset-light-modern" position="-4.19 5.942 7" scale="0.5 0.5 0.5">
-       <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
-    </a-entity>
-    
-    <a-entity id="light-modern-4" gltf-model="#asset-light-modern" position="3.909 5.942 7" scale="0.5 0.5 0.5">
-       <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
-    </a-entity>
-    
-    <a-entity id="light-modern-5" gltf-model="#asset-light-modern" position="-0.122 5.942 1" scale="1 1 1">
-       <a-light type="point" intensity="0.7" distance="12" decay="2" color="#FFDDAA"></a-light>
-    </a-entity>
+          const murs = ['#mur-fond', '#mur-gauche', '#mur-droit', '#mur-stairs-d-1', '#mur-stairs-d-2', '#mur-stairs-g-1', '#mur-stairs-g-2'];
+          murs.forEach(id => setSrc(id, isModern ? '#tex-mur-modern' : '#tex-mur-old'));
 
-
-    <a-entity id="le-bureau-modern" gltf-model="#asset-desk-modern" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05" visible="true"></a-entity>
-    <a-entity id="le-bureau-old" gltf-model="#asset-desk-old" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05" visible="false"></a-entity>
-
-    <a-entity id="la-sonnette" position="-0.122 1.109 -5.503" time-travel="startModern: true">
-      <a-entity gltf-model="#asset-bell" scale="10 10 10"></a-entity>
-      <a-sphere class="clickable" radius="0.15" material="visible: false" position="0 0.1 0"></a-sphere>
-    </a-entity>
-
-    <a-entity id="groupe-elements-modernes" visible="true">
-      <a-entity id="periph-gauche" gltf-model="#asset-periph" position="-1.166 -1.692 -6.640" scale="3 3 3" rotation="0 180 0"></a-entity>
-      <a-entity id="imac-gauche" gltf-model="#asset-imac" position="-1.541 1.12 -5.828" scale="0.3 0.3 0.3" rotation="0 -15.65 0"></a-entity>
-      <a-entity id="periph-droit" gltf-model="#asset-periph" position="1.294 -1.692 -6.640" scale="3 3 3" rotation="0 180 0"></a-entity>
-      <a-entity id="imac-droit" gltf-model="#asset-imac" position="1.319 1.12 -5.828" scale="0.3 0.3 0.3" rotation="0 12.88 0"></a-entity>
-    </a-entity>
-
-    <a-plane id="sol-principal" src="#tex-sol-modern" repeat="8 8" position="0 0 1.1" rotation="-90 0 0" width="40" height="40" roughness="0.5" metalness="0"></a-plane>
-    <a-plane id="plafond" src="#tex-plafond-modern" repeat="8 8" position="0 6 1.278" rotation="90 0 0" width="40" height="40" roughness="1"></a-plane>
-
-    <a-box id="mur-fond" src="#tex-mur-modern" repeat="4 2" position="0 4 -9.70" width="20" height="8" depth="0.5"></a-box>
-    <a-box id="mur-gauche" src="#tex-mur-modern" repeat="4 2" position="-10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5"></a-box>
-    <a-box id="mur-droit" src="#tex-mur-modern" repeat="4 2" position="10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5"></a-box>
-
-    <a-entity id="escalier-droit-bas" gltf-model="#asset-stairs-modern" position="6.302 -0.08 -0.32" scale="0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
-    <a-entity id="escalier-droit-haut" gltf-model="#asset-stairs-modern" position="6.302 -0.10 -1.97" scale="-0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
-    <a-box id="mur-stairs-d-1" src="#tex-mur-modern" repeat="4 2" position="7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3"></a-box>
-    <a-box id="mur-stairs-d-2" src="#tex-mur-modern" repeat="4 2" position="7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4"></a-box>
-
-    <a-entity id="escalier-gauche-bas" gltf-model="#asset-stairs-modern" position="-6.302 -0.10 -0.37" scale="-0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
-    <a-entity id="escalier-gauche-haut" gltf-model="#asset-stairs-modern" position="-6.302 -0.08 -2.00" scale="0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
-    <a-box id="mur-stairs-g-1" src="#tex-mur-modern" repeat="4 2" position="-7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3"></a-box>
-    <a-box id="mur-stairs-g-2" src="#tex-mur-modern" repeat="4 2" position="-7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4"></a-box>
-
-    <a-entity id="entrance-modern" gltf-model="#asset-entrance-modern" position="-6.4 0.3165 4.238" rotation="0 90 0" scale="1 1.4 1.06"></a-entity>
-
-    <a-plane id="decor-exterieur" src="#tex-mount-modern" position="0 -20 40" rotation="0 180 0" width="100" height="60" material="shader: flat; fog: false"></a-plane>
-    <a-box position="0 4 5" width="30" height="10" depth="1" color="#333" side="back" visible="false"></a-box>
-
-    <a-entity id="camera-rig" position="0 1.5 -2.75">
-      <a-entity camera look-controls wasd-controls>
-        <a-entity cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .clickable; far: 50; interval: 500"></a-entity>
-      </a-entity>
-    </a-entity>
-
-  </a-scene>
-
-  <script type="module" src="/src/main.js"></script>
-  
-  <script>
-    console.log('🚀 Script optimisé chargé');
-
-    AFRAME.registerComponent('time-travel', {
-      schema: {
-        startModern: { type: 'boolean', default: true }
-      },
-      init: function () {
-        this.isModern = this.data.startModern;
-        
-        // Références audio
-        this.audioModern = document.querySelector('#audio-music-modern');
-        this.audioOld = document.querySelector('#audio-music-old');
-        this.audioBell = document.querySelector('#audio-bell-ring');
-        
-        // Attendre le chargement
-        if (this.el.sceneEl.hasLoaded) {
-          this.updateScene();
-        } else {
-          this.el.sceneEl.addEventListener('loaded', () => this.updateScene());
-        }
-
-        // Clic Sonnette
-        this.el.addEventListener('click', () => {
-          console.log('🔔 CLIC SONNETTE!');
+          // 2. Visibilité
+          setVisible('#le-bureau-modern', isModern);
+          setVisible('#le-bureau-old', !isModern);
+          setVisible('#groupe-elements-modernes', isModern); // Cache les ordis
           
-          // Son ding
-          if (this.audioBell) {
-            this.audioBell.currentTime = 0;
-            this.audioBell.volume = 0.7;
-            this.audioBell.play().then(() => {
-              console.log('✅ Son sonnette joué!');
-            }).catch(e => {
-              console.error('❌ Erreur son sonnette:', e);
-            });
+          // Cache les lumières modernes dans le passé
+          ['#light-modern', '#light-modern-2', '#light-modern-3', '#light-modern-4', '#light-modern-5'].forEach(id => setVisible(id, isModern));
+
+          // 3. Musique
+          if (isModern) {
+             if(this.audioOld) this.audioOld.pause();
+             if(this.audioModern) this.audioModern.play().catch(e=>{});
           } else {
-            console.error('❌ Audio sonnette introuvable');
+             if(this.audioModern) this.audioModern.pause();
+             if(this.audioOld) this.audioOld.play().catch(e=>{});
           }
-
-          this.isModern = !this.isModern;
-          this.updateScene();
-        });
-      },
-
-      updateScene: function () {
-        const isModern = this.isModern;
-        
-        // Fonction helpers
-        const setSrc = (id, src) => { 
-            const el = document.querySelector(id);
-            if(el) el.setAttribute('src', src); 
-        };
-        const setVisible = (id, visible) => {
-             const el = document.querySelector(id);
-             if(el) el.setAttribute('visible', visible);
-        };
-
-        // 1. TEXTURES
-        setSrc('#sol-principal', isModern ? '#tex-sol-modern' : '#tex-sol-old');
-        setSrc('#plafond', isModern ? '#tex-plafond-modern' : '#tex-plafond-old');
-        setSrc('#decor-exterieur', isModern ? '#tex-mount-modern' : '#tex-mount-old');
-
-        const mursIds = ['#mur-fond', '#mur-gauche', '#mur-droit', '#mur-stairs-d-1', '#mur-stairs-d-2', '#mur-stairs-g-1', '#mur-stairs-g-2'];
-        mursIds.forEach(id => setSrc(id, isModern ? '#tex-mur-modern' : '#tex-mur-old'));
-
-        // 2. VISIBILITÉ
-        setVisible('#le-bureau-modern', isModern);
-        setVisible('#le-bureau-old', !isModern);
-        setVisible('#groupe-elements-modernes', isModern);
-        
-        // On cache les lampes modernes en mode Old
-        const lightIds = ['#light-modern', '#light-modern-2', '#light-modern-3', '#light-modern-4', '#light-modern-5'];
-        lightIds.forEach(id => setVisible(id, isModern));
-
-        // 3. MUSIQUE
-        if (isModern) {
-            if(this.audioOld) this.audioOld.pause();
-            if(this.audioModern) this.audioModern.play().catch(e => {});
-        } else {
-            if(this.audioModern) this.audioModern.pause();
-            if(this.audioOld) this.audioOld.play().catch(e => {});
         }
-      }
-    });
-  </script>
-</body>
+      });
+    </script>
+  </head>
+
+  <body>
+    <a-scene background="color: #F0F0F0">
+      
+      <a-assets timeout="10000">
+        <audio id="audio-music-modern" src="assets/MusicModern.mp3" preload="auto" loop="true"></audio>
+        <audio id="audio-music-old" src="assets/MusicOld.mp3" preload="auto" loop="true"></audio>
+        <audio id="audio-bell-ring" src="assets/BellRing.wav" preload="auto"></audio>
+
+        <a-asset-item id="asset-desk-modern" src="assets/DeskModern.glb"></a-asset-item>
+        <a-asset-item id="asset-desk-old" src="assets/DeskOld2.glb"></a-asset-item>
+        <a-asset-item id="asset-bell" src="assets/DeskBell.glb"></a-asset-item>
+        <a-asset-item id="asset-periph" src="assets/SourisClavier.glb"></a-asset-item>
+        <a-asset-item id="asset-imac" src="assets/iMac.glb"></a-asset-item>
+        <a-asset-item id="asset-stairs-modern" src="assets/StairsModern.glb"></a-asset-item>
+        <a-asset-item id="asset-entrance-modern" src="assets/EntranceModern.glb"></a-asset-item>
+        <a-asset-item id="asset-light-modern" src="assets/LightModern.glb"></a-asset-item>
+
+        <img id="tex-mount-modern" src="assets/MountModern.png">
+        <img id="tex-mount-old" src="assets/MountOld.png">
+        <img id="tex-sol-modern" src="assets/SolModern.jpg">
+        <img id="tex-sol-old" src="assets/SolOld.jpg">
+        <img id="tex-mur-modern" src="assets/MurModern.jpg">
+        <img id="tex-mur-old" src="assets/MurOld.jpg">
+        <img id="tex-plafond-modern" src="assets/PlafondModern.jpg">
+        <img id="tex-plafond-old" src="assets/PlafondOld.jpg">
+      </a-assets>
+
+      <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
+      <a-entity light="type: directional; color: #FFF; intensity: 0.5" position="-2 4 2"></a-entity>
+
+      <a-entity id="light-modern" gltf-model="#asset-light-modern" position="-4.19 5.942 -5" scale="0.5 0.5 0.5">
+         <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
+      </a-entity>
+      <a-entity id="light-modern-2" gltf-model="#asset-light-modern" position="3.909 5.942 -5" scale="0.5 0.5 0.5">
+         <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
+      </a-entity>
+      <a-entity id="light-modern-3" gltf-model="#asset-light-modern" position="-4.19 5.942 7" scale="0.5 0.5 0.5">
+         <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
+      </a-entity>
+      <a-entity id="light-modern-4" gltf-model="#asset-light-modern" position="3.909 5.942 7" scale="0.5 0.5 0.5">
+         <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
+      </a-entity>
+      <a-entity id="light-modern-5" gltf-model="#asset-light-modern" position="-0.122 5.942 1" scale="1 1 1">
+         <a-light type="point" intensity="0.7" distance="12" decay="2" color="#FFDDAA"></a-light>
+      </a-entity>
+
+
+      <a-plane id="sol-principal" src="#tex-sol-modern" repeat="8 8" position="0 0 1.1" rotation="-90 0 0" width="40" height="40" roughness="0.5" metalness="0.1"></a-plane>
+      <a-plane id="plafond" src="#tex-plafond-modern" repeat="8 8" position="0 6 1.278" rotation="90 0 0" width="40" height="40"></a-plane>
+
+      <a-box id="mur-fond" src="#tex-mur-modern" repeat="4 2" position="0 4 -9.70" width="20" height="8" depth="0.5"></a-box>
+      <a-box id="mur-gauche" src="#tex-mur-modern" repeat="4 2" position="-10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5"></a-box>
+      <a-box id="mur-droit" src="#tex-mur-modern" repeat="4 2" position="10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5"></a-box>
+
+      <a-entity id="escalier-droit-bas" gltf-model="#asset-stairs-modern" position="6.302 -0.08 -0.32" scale="0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
+      <a-entity id="escalier-droit-haut" gltf-model="#asset-stairs-modern" position="6.302 -0.10 -1.97" scale="-0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
+      <a-box id="mur-stairs-d-1" src="#tex-mur-modern" repeat="4 2" position="7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3"></a-box>
+      <a-box id="mur-stairs-d-2" src="#tex-mur-modern" repeat="4 2" position="7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4"></a-box>
+
+      <a-entity id="escalier-gauche-bas" gltf-model="#asset-stairs-modern" position="-6.302 -0.10 -0.37" scale="-0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
+      <a-entity id="escalier-gauche-haut" gltf-model="#asset-stairs-modern" position="-6.302 -0.08 -2.00" scale="0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
+      <a-box id="mur-stairs-g-1" src="#tex-mur-modern" repeat="4 2" position="-7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3"></a-box>
+      <a-box id="mur-stairs-g-2" src="#tex-mur-modern" repeat="4 2" position="-7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4"></a-box>
+
+      <a-entity id="entrance-modern" gltf-model="#asset-entrance-modern" position="-6.4 0.3165 4.238" rotation="0 90 0" scale="1 1.4 1.06"></a-entity>
+
+      <a-plane id="decor-exterieur" src="#tex-mount-modern" position="0 -20 40" rotation="0 180 0" width="100" height="60" material="shader: flat; fog: false"></a-plane>
+      <a-box position="0 4 5" width="30" height="10" depth="1" color="#333" side="back" visible="false"></a-box>
+
+      <a-entity id="le-bureau-modern" gltf-model="#asset-desk-modern" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05" visible="true"></a-entity>
+<a-entity id="le-bureau-old" gltf-model="assets/DeskOld2.glb" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05" visible=""></a-entity>
+
+      <a-entity id="la-sonnette" position="-0.122 1.109 -5.503" time-travel="startModern: true">
+        <a-entity gltf-model="#asset-bell" scale="10 10 10"></a-entity>
+        <a-sphere class="clickable" radius="0.15" material="opacity: 0; transparent: true" position="0 0.1 0"></a-sphere>
+      </a-entity>
+
+      <a-entity id="groupe-elements-modernes" visible="true">
+        <a-entity id="periph-gauche" gltf-model="#asset-periph" position="-1.166 -1.692 -6.640" scale="3 3 3" rotation="0 180 0"></a-entity>
+        <a-entity id="imac-gauche" gltf-model="#asset-imac" position="-1.541 1.12 -5.828" scale="0.3 0.3 0.3" rotation="0 -15.65 0"></a-entity>
+        <a-entity id="periph-droit" gltf-model="#asset-periph" position="1.294 -1.692 -6.640" scale="3 3 3" rotation="0 180 0"></a-entity>
+        <a-entity id="imac-droit" gltf-model="#asset-imac" position="1.319 1.12 -5.828" scale="0.3 0.3 0.3" rotation="0 12.88 0"></a-entity>
+      </a-entity>
+
+      <a-entity id="camera-rig" position="0 1.5 -2.75">
+        <a-entity camera look-controls wasd-controls>
+           <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+        </a-entity>
+      </a-entity>
+
+    </a-scene>
+
+    <script>
+      document.addEventListener('click', function() {
+        const audio = document.querySelector('#audio-music-modern');
+      }, { once: true });
+    </script>
+  </body>
 </html>
