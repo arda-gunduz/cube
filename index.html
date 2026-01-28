@@ -18,7 +18,7 @@
     <a-assets timeout="10000">
       <audio id="audio-music-modern" src="assets/MusicModern.mp3" preload="auto" loop="true"></audio>
       <audio id="audio-music-old" src="assets/MusicOld.mp3" preload="auto" loop="true"></audio>
-      <audio id="audio-bell-ring" src="assets/BellRing.mp3" preload="auto"></audio>
+      <audio id="audio-bell-ring" src="assets/BellRing.wav" preload="auto"></audio>
 
       <a-asset-item id="asset-desk-modern" src="assets/DeskModern.glb"></a-asset-item>
       <a-asset-item id="asset-desk-old" src="assets/DeskOld.glb"></a-asset-item>
@@ -135,11 +135,19 @@
 
         // Clic Sonnette
         this.el.addEventListener('click', () => {
+          console.log('🔔 CLIC SONNETTE!');
           
           // Son ding
           if (this.audioBell) {
             this.audioBell.currentTime = 0;
-            this.audioBell.play().catch(e => {});
+            this.audioBell.volume = 0.7;
+            this.audioBell.play().then(() => {
+              console.log('✅ Son sonnette joué!');
+            }).catch(e => {
+              console.error('❌ Erreur son sonnette:', e);
+            });
+          } else {
+            console.error('❌ Audio sonnette introuvable');
           }
 
           this.isModern = !this.isModern;
