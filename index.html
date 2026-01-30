@@ -60,6 +60,11 @@ const elevators = document.querySelectorAll('.elevator-changeable');
 elevators.forEach(el => {
   el.setAttribute('src', isModern ? '#tex-elevator-modern' : '#tex-elevator-old');
 });
+// GESTION DES TAPIS
+const carpets = document.querySelectorAll('.carpet-changeable');
+carpets.forEach(el => {
+  el.setAttribute('src', isModern ? '#tex-carpet-modern' : '#tex-carpet-old');
+});
           // 3. Musique
           if (isModern) {
              if(this.audioOld) this.audioOld.pause();
@@ -103,6 +108,9 @@ elevators.forEach(el => {
         <img id="tex-sol-old" src="assets/SolOld.jpg">
         <img id="tex-plafond-modern" src="assets/PlafondModern.jpg">
         <img id="tex-plafond-old" src="assets/PlafondOld.jpg">
+
+        <img id="tex-carpet-modern" src="assets/CarpetModern.png">
+<img id="tex-carpet-old" src="assets/CarpetOld.png">
       </a-assets>
 
       <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
@@ -173,7 +181,8 @@ elevators.forEach(el => {
 <a-image class="elevator-changeable" src="#tex-elevator-modern" position="-5.89 1.7815 4.34474" rotation="0 90 0" width="4" height="5" transparent="true" material="" geometry="width: 3; height: 4">
 </a-image>
 
-
+<a-image class="carpet-changeable" src="#tex-carpet-modern" position="0 0.02 2.88814" rotation="-90 90 0" width="6" height="4" transparent="true" material="" geometry="" scale="2 2 2">
+</a-image>
 
       <a-entity id="entrance-modern" gltf-model="#asset-entrance-modern" position="-6.4 0.3165 4.238" rotation="0 90 0" scale="1 1.4 1.06"></a-entity>
 
