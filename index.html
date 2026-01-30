@@ -23,6 +23,10 @@
         this.audioBell = this.$('#audio-bell-ring');
         this.audioModern = this.$('#audio-music-modern');
         this.audioOld = this.$('#audio-music-old');
+        
+        // Initialiser les volumes
+        if (this.audioModern) this.audioModern.volume = this.isModern ? 1 : 0;
+        if (this.audioOld) this.audioOld.volume = this.isModern ? 0 : 1;
 
         if (this.el.sceneEl.hasLoaded) this.updateScene();
         else this.el.sceneEl.addEventListener('loaded', () => this.updateScene());
@@ -30,6 +34,35 @@
         this.el.addEventListener('click', () => {
           if (!this.isTransitioning) this.startTimeTravel();
         });
+      },
+
+      // Fondu audio progressif
+      fadeAudio: function(audioOut, audioIn, duration = 3000) {
+        const steps = 30;
+        const interval = duration / steps;
+        let step = 0;
+        
+        // Démarrer la nouvelle musique à volume 0
+        if (audioIn) {
+          audioIn.volume = 0;
+          audioIn.play().catch(() => {});
+        }
+        
+        const fade = setInterval(() => {
+          step++;
+          const progress = step / steps;
+          
+          if (audioOut) audioOut.volume = Math.max(0, 1 - progress);
+          if (audioIn) audioIn.volume = Math.min(1, progress);
+          
+          if (step >= steps) {
+            clearInterval(fade);
+            if (audioOut) {
+              audioOut.pause();
+              audioOut.volume = 1; // Reset pour la prochaine fois
+            }
+          }
+        }, interval);
       },
 
       startTimeTravel: function () {
@@ -40,16 +73,23 @@
           this.audioBell.currentTime = 0;
           this.audioBell.play().catch(() => {});
         }
+        
+        // Fondu musical immédiat au click
+        if (toModern) {
+          this.fadeAudio(this.audioOld, this.audioModern, 3000);
+        } else {
+          this.fadeAudio(this.audioModern, this.audioOld, 3000);
+        }
 
         this.transitionElements(toModern);
-        setTimeout(() => { this.isTransitioning = false; }, 5000);
+        setTimeout(() => { this.isTransitioning = false; }, 6000);
       },
 
       // Animation depop/pop pour objets légers uniquement
       depop: function(id, callback) {
         const el = this.$(id);
         if (!el) return callback?.();
-        const dur = 250 + Math.random() * 150;
+        const dur = 350 + Math.random() * 200;
         el.setAttribute('animation__depop', { property: 'scale', to: '0 0 0', dur, easing: 'easeInBack' });
         setTimeout(() => {
           el.setAttribute('visible', false);
@@ -62,7 +102,7 @@
       pop: function(id, scale = '1 1 1') {
         const el = this.$(id);
         if (!el) return;
-        const dur = 300 + Math.random() * 200;
+        const dur = 400 + Math.random() * 250;
         el.setAttribute('scale', '0 0 0');
         el.setAttribute('visible', true);
         el.setAttribute('animation__pop', { property: 'scale', to: scale, dur, easing: 'easeOutElastic' });
@@ -76,30 +116,10 @@
       transitionElements: function (toModern) {
         const m = toModern;
 
-        // === STRUCTURES (changement instantané, pas d'animation) ===
-        // 0ms - Murs, sol, plafond, escaliers changent ensemble au début
+        // === 0ms - Mur du fond + Bureau et accessoires ===
         setTimeout(() => {
-          // Murs
-          ['#mur-fond', '#mur-gauche', '#mur-droit', '#mur-stairs-d-1', '#mur-stairs-d-2', '#mur-stairs-g-1', '#mur-stairs-g-2']
-            .forEach(id => this.setColor(id, m ? '#B1B0AE' : '#EB97AC'));
+          this.setColor('#mur-fond', m ? '#B1B0AE' : '#EB97AC');
           
-          // Sol et plafond
-          this.setSrc('#sol-principal', m ? '#tex-sol-modern' : '#tex-sol-old');
-          this.setSrc('#plafond', m ? '#tex-plafond-modern' : '#tex-plafond-old');
-          this.setSrc('#decor-exterieur', m ? '#tex-mount-modern' : '#tex-mount-old');
-          
-          // Escaliers (visibilité simple)
-          ['#escalier-droit-bas', '#escalier-droit-haut', '#escalier-gauche-bas', '#escalier-gauche-haut'].forEach(id => this.setVis(id, m));
-          ['#escalier-old-droit-bas', '#escalier-old-droit-haut', '#escalier-old-gauche-bas', '#escalier-old-gauche-haut'].forEach(id => this.setVis(id, !m));
-          
-          // Textures ascenseurs et tapis
-          document.querySelectorAll('.elevator-changeable').forEach(el => el.setAttribute('src', m ? '#tex-elevator-modern' : '#tex-elevator-old'));
-          document.querySelectorAll('.carpet-changeable').forEach(el => el.setAttribute('src', m ? '#tex-carpet-modern' : '#tex-carpet-old'));
-        }, 0);
-
-        // === OBJETS LÉGERS (avec animation depop/pop) ===
-        // 200ms - Bureau et accessoires
-        setTimeout(() => {
           if (m) {
             this.swap('#le-bureau-old', '#le-bureau-modern', '0.04 0.04 0.05');
             this.depop('#groupe-elements-anciens', () => this.pop('#groupe-elements-modernes'));
@@ -107,22 +127,26 @@
             this.swap('#le-bureau-modern', '#le-bureau-old', '1 1.2 0.8');
             this.depop('#groupe-elements-modernes', () => this.pop('#groupe-elements-anciens'));
           }
-        }, 200);
+        }, 0);
 
-        // 600ms - Horloge
+        // === 800ms - Horloge + Sol ===
         setTimeout(() => {
+          this.setSrc('#sol-principal', m ? '#tex-sol-modern' : '#tex-sol-old');
           if (m) this.swap('#horloge-old', '#horloge-moderne');
           else this.swap('#horloge-moderne', '#horloge-old');
-        }, 600);
+        }, 800);
 
-        // 1000ms - Entrée
+        // === 1500ms - Mur droit + Escaliers droits + Lumières avant ===
         setTimeout(() => {
-          if (m) this.swap('#entrance-old', '#entrance-modern', '1 1.4 1.06');
-          else this.swap('#entrance-modern', '#entrance-old', '1 1.4 1.06');
-        }, 1000);
-
-        // 1400ms - Lumières avant
-        setTimeout(() => {
+          this.setColor('#mur-droit', m ? '#B1B0AE' : '#EB97AC');
+          this.setColor('#mur-stairs-d-1', m ? '#B1B0AE' : '#EB97AC');
+          this.setColor('#mur-stairs-d-2', m ? '#B1B0AE' : '#EB97AC');
+          
+          this.setVis('#escalier-droit-bas', m);
+          this.setVis('#escalier-droit-haut', m);
+          this.setVis('#escalier-old-droit-bas', !m);
+          this.setVis('#escalier-old-droit-haut', !m);
+          
           if (m) {
             this.swap('#light-old', '#light-modern', '0.5 0.5 0.5');
             this.swap('#light-old-2', '#light-modern-2', '0.5 0.5 0.5');
@@ -130,10 +154,21 @@
             this.swap('#light-modern', '#light-old', '2 2 2');
             this.swap('#light-modern-2', '#light-old-2', '2 2 2');
           }
-        }, 1400);
+        }, 1500);
 
-        // 1800ms - Lumières arrière
+        // === 2300ms - Plafond + Ascenseurs + Tapis ===
         setTimeout(() => {
+          this.setSrc('#plafond', m ? '#tex-plafond-modern' : '#tex-plafond-old');
+          document.querySelectorAll('.elevator-changeable').forEach(el => el.setAttribute('src', m ? '#tex-elevator-modern' : '#tex-elevator-old'));
+          document.querySelectorAll('.carpet-changeable').forEach(el => el.setAttribute('src', m ? '#tex-carpet-modern' : '#tex-carpet-old'));
+        }, 2300);
+
+        // === 3000ms - Décor extérieur + Entrée + Lumières arrière ===
+        setTimeout(() => {
+          this.setSrc('#decor-exterieur', m ? '#tex-mount-modern' : '#tex-mount-old');
+          this.setVis('#entrance-modern', m);
+          this.setVis('#entrance-old', !m);
+          
           if (m) {
             this.swap('#light-old-3', '#light-modern-3', '0.5 0.5 0.5');
             this.swap('#light-old-4', '#light-modern-4', '0.5 0.5 0.5');
@@ -141,23 +176,27 @@
             this.swap('#light-modern-3', '#light-old-3', '2 2 2');
             this.swap('#light-modern-4', '#light-old-4', '2 2 2');
           }
-        }, 1800);
+        }, 3000);
 
-        // 2200ms - Lumière centrale + musique + fin
+        // === 3800ms - Mur gauche + Escaliers gauches ===
+        setTimeout(() => {
+          this.setColor('#mur-gauche', m ? '#B1B0AE' : '#EB97AC');
+          this.setColor('#mur-stairs-g-1', m ? '#B1B0AE' : '#EB97AC');
+          this.setColor('#mur-stairs-g-2', m ? '#B1B0AE' : '#EB97AC');
+          
+          this.setVis('#escalier-gauche-bas', m);
+          this.setVis('#escalier-gauche-haut', m);
+          this.setVis('#escalier-old-gauche-bas', !m);
+          this.setVis('#escalier-old-gauche-haut', !m);
+        }, 3800);
+
+        // === 4500ms - Lumière centrale + Fin ===
         setTimeout(() => {
           if (m) this.swap('#light-old-5', '#light-modern-5', '1 1 1');
           else this.swap('#light-modern-5', '#light-old-5', '2 2 2');
 
-          // Musique
-          if (m) {
-            this.audioOld?.pause();
-            this.audioModern?.play().catch(() => {});
-          } else {
-            this.audioModern?.pause();
-            this.audioOld?.play().catch(() => {});
-          }
           this.isModern = m;
-        }, 2200);
+        }, 4500);
       },
 
       updateScene: function () {
@@ -194,13 +233,13 @@
         document.querySelectorAll('.elevator-changeable').forEach(el => el.setAttribute('src', m ? '#tex-elevator-modern' : '#tex-elevator-old'));
         document.querySelectorAll('.carpet-changeable').forEach(el => el.setAttribute('src', m ? '#tex-carpet-modern' : '#tex-carpet-old'));
 
-        // Musique
+        // Musique (volume direct sans fondu au chargement)
         if (m) {
-          this.audioOld?.pause();
-          this.audioModern?.play().catch(() => {});
+          if (this.audioOld) { this.audioOld.pause(); this.audioOld.volume = 0; }
+          if (this.audioModern) { this.audioModern.volume = 1; this.audioModern.play().catch(() => {}); }
         } else {
-          this.audioModern?.pause();
-          this.audioOld?.play().catch(() => {});
+          if (this.audioModern) { this.audioModern.pause(); this.audioModern.volume = 0; }
+          if (this.audioOld) { this.audioOld.volume = 1; this.audioOld.play().catch(() => {}); }
         }
       }
     });
