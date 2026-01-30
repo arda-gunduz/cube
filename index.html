@@ -1,446 +1,420 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Grand Budapest Hotel - Final</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 
-    <script>
-      // Composant pour l'effet de distorsion temporelle
-      AFRAME.registerComponent('time-distortion', {
-        init: function() {
-          this.ring = null;
-        },
-        
-        startEffect: function(duration, onComplete) {
-          const scene = this.el.sceneEl;
-          const cameraRig = document.querySelector('#camera-rig');
-          const camPos = cameraRig.getAttribute('position');
-          
-          // Créer un anneau de distorsion qui tourne
-          this.ring = document.createElement('a-entity');
-          this.ring.setAttribute('position', {x: camPos.x, y: camPos.y + 1, z: camPos.z});
-          
-          // Créer plusieurs anneaux concentriques
-          for (let i = 0; i < 5; i++) {
-            const torus = document.createElement('a-torus');
-            const radius = 2 + i * 1.5;
-            torus.setAttribute('radius', radius);
-            torus.setAttribute('radius-tubular', 0.02 + i * 0.01);
-            torus.setAttribute('segments-radial', 32);
-            torus.setAttribute('segments-tubular', 48);
-            torus.setAttribute('material', {
-              color: i % 2 === 0 ? '#FFD700' : '#FFFFFF',
-              opacity: 0.6 - i * 0.1,
-              transparent: true,
-              shader: 'flat',
-              side: 'double'
-            });
-            torus.setAttribute('rotation', {x: 90, y: 0, z: 0});
-            torus.setAttribute('animation', {
-              property: 'rotation',
-              from: {x: 90, y: 0, z: 0},
-              to: {x: 90, y: 0, z: 360},
-              dur: duration - i * 200,
-              easing: 'easeInOutQuad'
-            });
-            torus.setAttribute('animation__scale', {
-              property: 'scale',
-              from: {x: 0.1, y: 0.1, z: 0.1},
-              to: {x: 1, y: 1, z: 1},
-              dur: duration * 0.3,
-              easing: 'easeOutElastic'
-            });
-            this.ring.appendChild(torus);
-          }
-          
-          scene.appendChild(this.ring);
-          
-          // Animation de contraction à la fin
-          setTimeout(() => {
-            const toruses = this.ring.querySelectorAll('a-torus');
-            toruses.forEach((t, i) => {
-              t.setAttribute('animation__shrink', {
-                property: 'scale',
-                to: {x: 0, y: 0, z: 0},
-                dur: 800,
-                easing: 'easeInQuad',
-                delay: i * 100
-              });
-              t.setAttribute('animation__fade', {
-                property: 'material.opacity',
-                to: 0,
-                dur: 800,
-                easing: 'easeInQuad',
-                delay: i * 100
-              });
-            });
-          }, duration - 1000);
-          
-          // Nettoyer et callback
-          setTimeout(() => {
-            if (this.ring) {
-              this.ring.remove();
-              this.ring = null;
-            }
-            if (onComplete) onComplete();
-          }, duration);
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grand Budapest Hotel - Final</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+  <script>
+    AFRAME.registerComponent('time-travel', {
+      schema: { startModern: { type: 'boolean', default: true } },
+
+      // Helpers réutilisables
+      $: (id) => document.querySelector(id),
+      setSrc: function(id, src) { const el = this.$(id); if (el) el.setAttribute('src', src); },
+      setColor: function(id, color) { const el = this.$(id); if (el) el.setAttribute('color', color); },
+      setVis: function(id, vis) { const el = this.$(id); if (el) el.setAttribute('visible', vis); },
+
+      init: function () {
+        this.isModern = this.data.startModern;
+        this.isTransitioning = false;
+        this.audioBell = this.$('#audio-bell-ring');
+        this.audioModern = this.$('#audio-music-modern');
+        this.audioOld = this.$('#audio-music-old');
+
+        if (this.el.sceneEl.hasLoaded) this.updateScene();
+        else this.el.sceneEl.addEventListener('loaded', () => this.updateScene());
+
+        this.el.addEventListener('click', () => {
+          if (!this.isTransitioning) this.startTimeTravel();
+        });
+      },
+
+      startTimeTravel: function () {
+        this.isTransitioning = true;
+        const toModern = !this.isModern;
+
+        if (this.audioBell) {
+          this.audioBell.currentTime = 0;
+          this.audioBell.play().catch(() => {});
         }
-      });
 
-      AFRAME.registerComponent('time-travel', {
-        schema: { startModern: { type: 'boolean', default: true } },
-        init: function () {
-          this.isModern = this.data.startModern;
-          this.isTransitioning = false;
-          this.audioBell = document.querySelector('#audio-bell-ring');
-          this.audioModern = document.querySelector('#audio-music-modern');
-          this.audioOld = document.querySelector('#audio-music-old');
-          this.distortionSystem = document.querySelector('#distortion-system');
+        this.transitionElements(toModern);
+        setTimeout(() => { this.isTransitioning = false; }, 5000);
+      },
 
-          // On lance la scène
-          if (this.el.sceneEl.hasLoaded) { this.updateSceneImmediate(); } 
-          else { this.el.sceneEl.addEventListener('loaded', () => this.updateSceneImmediate()); }
+      // Animation depop/pop pour objets légers uniquement
+      depop: function(id, callback) {
+        const el = this.$(id);
+        if (!el) return callback?.();
+        const dur = 250 + Math.random() * 150;
+        el.setAttribute('animation__depop', { property: 'scale', to: '0 0 0', dur, easing: 'easeInBack' });
+        setTimeout(() => {
+          el.setAttribute('visible', false);
+          el.removeAttribute('animation__depop');
+          el.setAttribute('scale', '1 1 1');
+          callback?.();
+        }, dur);
+      },
 
-          this.el.addEventListener('click', () => {
-            if (this.isTransitioning) return;
-            this.startTimeTravel();
-          });
-        },
+      pop: function(id, scale = '1 1 1') {
+        const el = this.$(id);
+        if (!el) return;
+        const dur = 300 + Math.random() * 200;
+        el.setAttribute('scale', '0 0 0');
+        el.setAttribute('visible', true);
+        el.setAttribute('animation__pop', { property: 'scale', to: scale, dur, easing: 'easeOutElastic' });
+        setTimeout(() => el.removeAttribute('animation__pop'), dur);
+      },
 
-        startTimeTravel: function() {
-          this.isTransitioning = true;
-          const toModern = !this.isModern;
-          const duration = 5000; // 5 secondes
+      swap: function(hideId, showId, showScale = '1 1 1') {
+        this.depop(hideId, () => this.pop(showId, showScale));
+      },
+
+      transitionElements: function (toModern) {
+        const m = toModern;
+
+        // === STRUCTURES (changement instantané, pas d'animation) ===
+        // 0ms - Murs, sol, plafond, escaliers changent ensemble au début
+        setTimeout(() => {
+          // Murs
+          ['#mur-fond', '#mur-gauche', '#mur-droit', '#mur-stairs-d-1', '#mur-stairs-d-2', '#mur-stairs-g-1', '#mur-stairs-g-2']
+            .forEach(id => this.setColor(id, m ? '#B1B0AE' : '#EB97AC'));
           
-          // Jouer le son de la cloche
-          if (this.audioBell) { 
-            this.audioBell.currentTime = 0; 
-            this.audioBell.play().catch(e=>{}); 
-          }
+          // Sol et plafond
+          this.setSrc('#sol-principal', m ? '#tex-sol-modern' : '#tex-sol-old');
+          this.setSrc('#plafond', m ? '#tex-plafond-modern' : '#tex-plafond-old');
+          this.setSrc('#decor-exterieur', m ? '#tex-mount-modern' : '#tex-mount-old');
           
-          // Démarrer l'effet de distorsion
-          if (this.distortionSystem) {
-            this.distortionSystem.components['time-distortion'].startEffect(duration, () => {
-              this.isTransitioning = false;
-            });
-          }
+          // Escaliers (visibilité simple)
+          ['#escalier-droit-bas', '#escalier-droit-haut', '#escalier-gauche-bas', '#escalier-gauche-haut'].forEach(id => this.setVis(id, m));
+          ['#escalier-old-droit-bas', '#escalier-old-droit-haut', '#escalier-old-gauche-bas', '#escalier-old-gauche-haut'].forEach(id => this.setVis(id, !m));
           
-          // Changer les éléments progressivement dans le sens horaire
-          this.transitionElements(toModern, duration);
-        },
+          // Textures ascenseurs et tapis
+          document.querySelectorAll('.elevator-changeable').forEach(el => el.setAttribute('src', m ? '#tex-elevator-modern' : '#tex-elevator-old'));
+          document.querySelectorAll('.carpet-changeable').forEach(el => el.setAttribute('src', m ? '#tex-carpet-modern' : '#tex-carpet-old'));
+        }, 0);
 
-        transitionElements: function(toModern, duration) {
-          const self = this;
-          const setSrc = (id, src) => { const el = document.querySelector(id); if(el) el.setAttribute('src', src); };
-          const setColor = (id, color) => { const el = document.querySelector(id); if(el) el.setAttribute('color', color); };
-          const setVisible = (id, viz) => { const el = document.querySelector(id); if(el) el.setAttribute('visible', viz); };
-          
-          // Éléments à changer dans l'ordre horaire (depuis la vue de dessus)
-          // Devant -> Droite -> Derrière -> Gauche
-          const transitionSequence = [
-            // 0s - Bureau et éléments devant
-            { delay: 0, action: () => {
-              setVisible('#le-bureau-modern', toModern);
-              setVisible('#le-bureau-old', !toModern);
-              setVisible('#groupe-elements-modernes', toModern);
-              setVisible('#groupe-elements-anciens', !toModern);
-            }},
-            // 0.8s - Mur du fond et lumières avant
-            { delay: 800, action: () => {
-              setColor('#mur-fond', toModern ? '#B1B0AE' : '#EB97AC');
-              setVisible('#light-modern', toModern);
-              setVisible('#light-modern-2', toModern);
-              setVisible('#light-old', !toModern);
-              setVisible('#light-old-2', !toModern);
-              setVisible('#horloge-moderne', toModern);
-              setVisible('#horloge-old', !toModern);
-            }},
-            // 1.5s - Côté droit (escaliers et murs)
-            { delay: 1500, action: () => {
-              setColor('#mur-droit', toModern ? '#B1B0AE' : '#EB97AC');
-              setColor('#mur-stairs-d-1', toModern ? '#B1B0AE' : '#EB97AC');
-              setColor('#mur-stairs-d-2', toModern ? '#B1B0AE' : '#EB97AC');
-              setVisible('#escalier-droit-bas', toModern);
-              setVisible('#escalier-droit-haut', toModern);
-              setVisible('#escalier-old-droit-bas', !toModern);
-              setVisible('#escalier-old-droit-haut', !toModern);
-            }},
-            // 2.2s - Plafond et sol
-            { delay: 2200, action: () => {
-              setSrc('#sol-principal', toModern ? '#tex-sol-modern' : '#tex-sol-old');
-              setSrc('#plafond', toModern ? '#tex-plafond-modern' : '#tex-plafond-old');
-              // Ascenseurs et tapis
-              document.querySelectorAll('.elevator-changeable').forEach(el => {
-                el.setAttribute('src', toModern ? '#tex-elevator-modern' : '#tex-elevator-old');
-              });
-              document.querySelectorAll('.carpet-changeable').forEach(el => {
-                el.setAttribute('src', toModern ? '#tex-carpet-modern' : '#tex-carpet-old');
-              });
-            }},
-            // 3s - Arrière et lumières arrière
-            { delay: 3000, action: () => {
-              setSrc('#decor-exterieur', toModern ? '#tex-mount-modern' : '#tex-mount-old');
-              setVisible('#light-modern-3', toModern);
-              setVisible('#light-modern-4', toModern);
-              setVisible('#light-old-3', !toModern);
-              setVisible('#light-old-4', !toModern);
-            }},
-            // 3.8s - Côté gauche (escaliers et murs)
-            { delay: 3800, action: () => {
-              setColor('#mur-gauche', toModern ? '#B1B0AE' : '#EB97AC');
-              setColor('#mur-stairs-g-1', toModern ? '#B1B0AE' : '#EB97AC');
-              setColor('#mur-stairs-g-2', toModern ? '#B1B0AE' : '#EB97AC');
-              setVisible('#escalier-gauche-bas', toModern);
-              setVisible('#escalier-gauche-haut', toModern);
-              setVisible('#escalier-old-gauche-bas', !toModern);
-              setVisible('#escalier-old-gauche-haut', !toModern);
-            }},
-            // 4.5s - Lumière centrale et finalisation
-            { delay: 4500, action: () => {
-              setVisible('#light-modern-5', toModern);
-              setVisible('#light-old-5', !toModern);
-              
-              // Musique
-              if (toModern) {
-                if(self.audioOld) self.audioOld.pause();
-                if(self.audioModern) self.audioModern.play().catch(e=>{});
-              } else {
-                if(self.audioModern) self.audioModern.pause();
-                if(self.audioOld) self.audioOld.play().catch(e=>{});
-              }
-              
-              self.isModern = toModern;
-            }}
-          ];
-          
-          // Exécuter chaque étape avec son délai
-          transitionSequence.forEach(step => {
-            setTimeout(step.action, step.delay);
-          });
-        },
-
-        updateSceneImmediate: function () {
-          const isModern = this.isModern;
-          const setSrc = (id, src) => { const el = document.querySelector(id); if(el) el.setAttribute('src', src); };
-          const setColor = (id, color) => { const el = document.querySelector(id); if(el) el.setAttribute('color', color); };
-          const setVisible = (id, viz) => { const el = document.querySelector(id); if(el) el.setAttribute('visible', viz); };
-
-          // 1. Textures et couleurs
-          setSrc('#sol-principal', isModern ? '#tex-sol-modern' : '#tex-sol-old');
-          setSrc('#plafond', isModern ? '#tex-plafond-modern' : '#tex-plafond-old');
-          setSrc('#decor-exterieur', isModern ? '#tex-mount-modern' : '#tex-mount-old');
-
-          const murs = ['#mur-fond', '#mur-gauche', '#mur-droit', '#mur-stairs-d-1', '#mur-stairs-d-2', '#mur-stairs-g-1', '#mur-stairs-g-2'];
-          murs.forEach(id => setColor(id, isModern ? '#B1B0AE' : '#EB97AC'));
-
-          // 2. Visibilité
-          setVisible('#le-bureau-modern', isModern);
-          setVisible('#le-bureau-old', !isModern);
-          setVisible('#groupe-elements-modernes', isModern);
-          setVisible('#groupe-elements-anciens', !isModern);
-          
-          // Escaliers
-          ['#escalier-droit-bas', '#escalier-droit-haut', '#escalier-gauche-bas', '#escalier-gauche-haut'].forEach(id => setVisible(id, isModern));
-          ['#escalier-old-droit-bas', '#escalier-old-droit-haut', '#escalier-old-gauche-bas', '#escalier-old-gauche-haut'].forEach(id => setVisible(id, !isModern));
-          
-          // Lumières
-          ['#light-modern', '#light-modern-2', '#light-modern-3', '#light-modern-4', '#light-modern-5'].forEach(id => setVisible(id, isModern));
-          ['#light-old', '#light-old-2', '#light-old-3', '#light-old-4', '#light-old-5'].forEach(id => setVisible(id, !isModern));
-          
-          // Ascenseurs et tapis
-          document.querySelectorAll('.elevator-changeable').forEach(el => {
-            el.setAttribute('src', isModern ? '#tex-elevator-modern' : '#tex-elevator-old');
-          });
-          document.querySelectorAll('.carpet-changeable').forEach(el => {
-            el.setAttribute('src', isModern ? '#tex-carpet-modern' : '#tex-carpet-old');
-          });
-
-          // 3. Musique
-          if (isModern) {
-             if(this.audioOld) this.audioOld.pause();
-             if(this.audioModern) this.audioModern.play().catch(e=>{});
+        // === OBJETS LÉGERS (avec animation depop/pop) ===
+        // 200ms - Bureau et accessoires
+        setTimeout(() => {
+          if (m) {
+            this.swap('#le-bureau-old', '#le-bureau-modern', '0.04 0.04 0.05');
+            this.depop('#groupe-elements-anciens', () => this.pop('#groupe-elements-modernes'));
           } else {
-             if(this.audioModern) this.audioModern.pause();
-             if(this.audioOld) this.audioOld.play().catch(e=>{});
+            this.swap('#le-bureau-modern', '#le-bureau-old', '1 1.2 0.8');
+            this.depop('#groupe-elements-modernes', () => this.pop('#groupe-elements-anciens'));
           }
+        }, 200);
+
+        // 600ms - Horloge
+        setTimeout(() => {
+          if (m) this.swap('#horloge-old', '#horloge-moderne');
+          else this.swap('#horloge-moderne', '#horloge-old');
+        }, 600);
+
+        // 1000ms - Entrée
+        setTimeout(() => {
+          if (m) this.swap('#entrance-old', '#entrance-modern', '1 1.4 1.06');
+          else this.swap('#entrance-modern', '#entrance-old', '1 1.4 1.06');
+        }, 1000);
+
+        // 1400ms - Lumières avant
+        setTimeout(() => {
+          if (m) {
+            this.swap('#light-old', '#light-modern', '0.5 0.5 0.5');
+            this.swap('#light-old-2', '#light-modern-2', '0.5 0.5 0.5');
+          } else {
+            this.swap('#light-modern', '#light-old', '2 2 2');
+            this.swap('#light-modern-2', '#light-old-2', '2 2 2');
+          }
+        }, 1400);
+
+        // 1800ms - Lumières arrière
+        setTimeout(() => {
+          if (m) {
+            this.swap('#light-old-3', '#light-modern-3', '0.5 0.5 0.5');
+            this.swap('#light-old-4', '#light-modern-4', '0.5 0.5 0.5');
+          } else {
+            this.swap('#light-modern-3', '#light-old-3', '2 2 2');
+            this.swap('#light-modern-4', '#light-old-4', '2 2 2');
+          }
+        }, 1800);
+
+        // 2200ms - Lumière centrale + musique + fin
+        setTimeout(() => {
+          if (m) this.swap('#light-old-5', '#light-modern-5', '1 1 1');
+          else this.swap('#light-modern-5', '#light-old-5', '2 2 2');
+
+          // Musique
+          if (m) {
+            this.audioOld?.pause();
+            this.audioModern?.play().catch(() => {});
+          } else {
+            this.audioModern?.pause();
+            this.audioOld?.play().catch(() => {});
+          }
+          this.isModern = m;
+        }, 2200);
+      },
+
+      updateScene: function () {
+        const m = this.isModern;
+
+        // Textures
+        this.setSrc('#sol-principal', m ? '#tex-sol-modern' : '#tex-sol-old');
+        this.setSrc('#plafond', m ? '#tex-plafond-modern' : '#tex-plafond-old');
+        this.setSrc('#decor-exterieur', m ? '#tex-mount-modern' : '#tex-mount-old');
+
+        // Couleurs murs
+        ['#mur-fond', '#mur-gauche', '#mur-droit', '#mur-stairs-d-1', '#mur-stairs-d-2', '#mur-stairs-g-1', '#mur-stairs-g-2']
+          .forEach(id => this.setColor(id, m ? '#B1B0AE' : '#EB97AC'));
+
+        // Visibilité objets
+        this.setVis('#le-bureau-modern', m);
+        this.setVis('#le-bureau-old', !m);
+        this.setVis('#groupe-elements-modernes', m);
+        this.setVis('#groupe-elements-anciens', !m);
+        this.setVis('#entrance-modern', m);
+        this.setVis('#entrance-old', !m);
+        this.setVis('#horloge-moderne', m);
+        this.setVis('#horloge-old', !m);
+
+        // Escaliers
+        ['#escalier-droit-bas', '#escalier-droit-haut', '#escalier-gauche-bas', '#escalier-gauche-haut'].forEach(id => this.setVis(id, m));
+        ['#escalier-old-droit-bas', '#escalier-old-droit-haut', '#escalier-old-gauche-bas', '#escalier-old-gauche-haut'].forEach(id => this.setVis(id, !m));
+
+        // Lumières
+        ['#light-modern', '#light-modern-2', '#light-modern-3', '#light-modern-4', '#light-modern-5'].forEach(id => this.setVis(id, m));
+        ['#light-old', '#light-old-2', '#light-old-3', '#light-old-4', '#light-old-5'].forEach(id => this.setVis(id, !m));
+
+        // Textures ascenseurs/tapis
+        document.querySelectorAll('.elevator-changeable').forEach(el => el.setAttribute('src', m ? '#tex-elevator-modern' : '#tex-elevator-old'));
+        document.querySelectorAll('.carpet-changeable').forEach(el => el.setAttribute('src', m ? '#tex-carpet-modern' : '#tex-carpet-old'));
+
+        // Musique
+        if (m) {
+          this.audioOld?.pause();
+          this.audioModern?.play().catch(() => {});
+        } else {
+          this.audioModern?.pause();
+          this.audioOld?.play().catch(() => {});
         }
-      });
-    </script>
-  </head>
+      }
+    });
+  </script>
+</head>
 
-  <body>
-    <a-scene background="color: #F0F0F0">
-      
-      <a-assets timeout="10000">
-        <audio id="audio-music-modern" src="assets/MusicModern.mp3" preload="auto" loop="true"></audio>
-        <audio id="audio-music-old" src="assets/MusicOld.mp3" preload="auto" loop="true"></audio>
-        <audio id="audio-bell-ring" src="assets/BellRing.wav" preload="auto"></audio>
+<body>
+  <a-scene background="color: #F0F0F0">
 
-        <a-asset-item id="asset-desk-modern" src="assets/DeskModern.glb"></a-asset-item>
-        <a-asset-item id="asset-desk-old" src="assets/DeskOld.glb"></a-asset-item>
-        <a-asset-item id="asset-bell" src="assets/DeskBell.glb"></a-asset-item>
-        <a-asset-item id="asset-periph" src="assets/SourisClavier.glb"></a-asset-item>
-        <a-asset-item id="asset-imac" src="assets/iMac.glb"></a-asset-item>
-        <a-asset-item id="asset-book" src="assets/Book.glb"></a-asset-item>
-        <a-asset-item id="asset-pen" src="assets/Pen.glb"></a-asset-item>
-        <a-asset-item id="asset-stairs-modern" src="assets/StairsModern.glb"></a-asset-item>
-        <a-asset-item id="asset-stairs-old" src="assets/StairsOld.glb"></a-asset-item>
-        <a-asset-item id="asset-entrance-modern" src="assets/EntranceModern.glb"></a-asset-item>
-        <a-asset-item id="asset-light-modern" src="assets/LightModern.glb"></a-asset-item>
-        <a-asset-item id="asset-light-old" src="assets/LightOld.glb"></a-asset-item>
+    <a-assets timeout="10000">
+      <audio id="audio-music-modern" src="assets/MusicModern.mp3" preload="auto" loop="true"></audio>
+      <audio id="audio-music-old" src="assets/MusicOld.mp3" preload="auto" loop="true"></audio>
+      <audio id="audio-bell-ring" src="assets/BellRing.wav" preload="auto"></audio>
 
-
-        <img id="tex-elevator-modern" src="assets/ElevatorModern.png">
-        <img id="tex-elevator-old" src="assets/ElevatorOld.png">
-        <img id="tex-mount-modern" src="assets/MountModern.png">
-        <img id="tex-mount-old" src="assets/MountOld.png">
-        <img id="tex-sol-modern" src="assets/SolModern.jpg">
-        <img id="tex-sol-old" src="assets/SolOld.jpg">
-        <img id="tex-plafond-modern" src="assets/PlafondModern.jpg">
-        <img id="tex-plafond-old" src="assets/PlafondOld.jpg">
-
-        <img id="tex-carpet-modern" src="assets/CarpetModern.png">
-        <img id="tex-carpet-old" src="assets/CarpetOld.png">
-        <img id="tex-clock-modern" src="assets/ClockModern.png">
-        <img id="tex-clock-old" src="assets/ClockOld.png">
-      </a-assets>
-
-      <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
-      <a-entity light="type: directional; color: #FFF; intensity: 0.5" position="-2 4 2"></a-entity>
-
-      <a-entity id="light-modern" gltf-model="#asset-light-modern" position="-4.19 5.942 -5" scale="0.5 0.5 0.5">
-         <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
-      </a-entity>
-      <a-entity id="light-modern-2" gltf-model="#asset-light-modern" position="3.909 5.942 -5" scale="0.5 0.5 0.5">
-         <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
-      </a-entity>
-      <a-entity id="light-modern-3" gltf-model="#asset-light-modern" position="-4.19 5.942 7" scale="0.5 0.5 0.5">
-         <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
-      </a-entity>
-      <a-entity id="light-modern-4" gltf-model="#asset-light-modern" position="3.909 5.942 7" scale="0.5 0.5 0.5">
-         <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
-      </a-entity>
-      <a-entity id="light-modern-5" gltf-model="#asset-light-modern" position="-0.122 5.942 1" scale="1 1 1">
-         <a-light type="point" intensity="0.7" distance="12" decay="2" color="#FFDDAA"></a-light>
-      </a-entity>
-
-      <!-- Lumières anciennes (style vintage) -->
-      <a-entity id="light-old" gltf-model="#asset-light-old" position="-4.19 4.05 -5" scale="2 2 2" visible="false">
-         <a-light type="point" intensity="2" distance="5" decay="2" color="#FFD700"></a-light>
-      </a-entity>
-      <a-entity id="light-old-2" gltf-model="#asset-light-old" position="3.909 4.05 -5" scale="2 2 2" visible="false">
-         <a-light type="point" intensity="2" distance="5" decay="2" color="#FFD700"></a-light>
-      </a-entity>
-      <a-entity id="light-old-3" gltf-model="#asset-light-old" position="-4.19 4.05 7" scale="2 2 2" visible="false">
-         <a-light type="point" intensity="1.8" distance="4" decay="2" color="#FFD700"></a-light>
-      </a-entity>
-      <a-entity id="light-old-4" gltf-model="#asset-light-old" position="3.909 4.05 7" scale="2 2 2" visible="false">
-         <a-light type="point" intensity="1.8" distance="4" decay="2" color="#FFD700"></a-light>
-      </a-entity>
-      <a-entity id="light-old-5" gltf-model="#asset-light-old" position="-0.122 4.05 1" scale="2 2 2" visible="false">
-         <a-light type="point" intensity="2.5" distance="6" decay="2" color="#FFD700"></a-light>
-      </a-entity>
+      <a-asset-item id="asset-desk-modern" src="assets/DeskModern.glb"></a-asset-item>
+      <a-asset-item id="asset-desk-old" src="assets/DeskOld.glb"></a-asset-item>
+      <a-asset-item id="asset-bell" src="assets/DeskBell.glb"></a-asset-item>
+      <a-asset-item id="asset-periph" src="assets/SourisClavier.glb"></a-asset-item>
+      <a-asset-item id="asset-imac" src="assets/iMac.glb"></a-asset-item>
+      <a-asset-item id="asset-book" src="assets/Book.glb"></a-asset-item>
+      <a-asset-item id="asset-pen" src="assets/Pen.glb"></a-asset-item>
+      <a-asset-item id="asset-stairs-modern" src="assets/StairsModern.glb"></a-asset-item>
+      <a-asset-item id="asset-stairs-old" src="assets/StairsOld.glb"></a-asset-item>
+      <a-asset-item id="asset-entrance-modern" src="assets/EntranceModern.glb"></a-asset-item>
+      <a-asset-item id="asset-entrance-old" src="assets/EntranceOld.glb"></a-asset-item>
+      <a-asset-item id="asset-light-modern" src="assets/LightModern.glb"></a-asset-item>
+      <a-asset-item id="asset-light-old" src="assets/LightOld.glb"></a-asset-item>
 
 
-      <a-plane id="sol-principal" src="#tex-sol-modern" repeat="8 8" position="0 0 1.1" rotation="-90 0 0" width="21" height="21.800" roughness="0.5" metalness="0.1"></a-plane>
-      <a-plane id="plafond" src="#tex-plafond-modern" repeat="8 8" position="0 6 1.278" rotation="90 0 0" width="21" height="21.800"></a-plane>
+      <img id="tex-elevator-modern" src="assets/ElevatorModern.png">
+      <img id="tex-elevator-old" src="assets/ElevatorOld.png">
+      <img id="tex-mount-modern" src="assets/MountModern.png">
+      <img id="tex-mount-old" src="assets/MountOld.png">
+      <img id="tex-sol-modern" src="assets/SolModern.jpg">
+      <img id="tex-sol-old" src="assets/SolOld.jpg">
+      <img id="tex-plafond-modern" src="assets/PlafondModern.jpg">
+      <img id="tex-plafond-old" src="assets/PlafondOld.jpg">
 
-      <a-box id="mur-fond" color="#B1B0AE" position="0 4 -9.70" width="20" height="8" depth="0.5"></a-box>
-      <a-box id="mur-gauche" color="#B1B0AE" position="-10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5"></a-box>
-      <a-box id="mur-droit" color="#B1B0AE" position="10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5"></a-box>
+      <img id="tex-carpet-modern" src="assets/CarpetModern.png">
+      <img id="tex-carpet-old" src="assets/CarpetOld.png">
+      <img id="tex-clock-modern" src="assets/ClockModern.png">
+      <img id="tex-clock-old" src="assets/ClockOld.png">
+    </a-assets>
 
-      <a-entity id="escalier-droit-bas" gltf-model="#asset-stairs-modern" position="6.302 -0.08 -0.32" scale="0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
-      <a-entity id="escalier-droit-haut" gltf-model="#asset-stairs-modern" position="6.302 -0.10 -1.97" scale="-0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
-      <a-box id="mur-stairs-d-1" color="#B1B0AE" position="7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3"></a-box>
-      <a-box id="mur-stairs-d-2" color="#B1B0AE" position="7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4"></a-box>
+    <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
+    <a-entity light="type: directional; color: #FFF; intensity: 0.5" position="-2 4 2"></a-entity>
 
-      <a-entity id="escalier-gauche-bas" gltf-model="#asset-stairs-modern" position="-6.302 -0.10 -0.37" scale="-0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
-      <a-entity id="escalier-gauche-haut" gltf-model="#asset-stairs-modern" position="-6.302 -0.08 -2.00" scale="0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
-      <a-box id="mur-stairs-g-1" color="#B1B0AE" position="-7.49 4 6.19" rotation="0 90 0" width="11.61" height="8" depth="3"></a-box>
-      <a-box id="mur-stairs-g-2" color="#B1B0AE" position="-7.99 4 -6.73" rotation="0 90 0" width="8" height="8" depth="4"></a-box>
+    <a-entity id="light-modern" gltf-model="#asset-light-modern" position="-4.19 5.942 -5" scale="0.5 0.5 0.5">
+      <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
+    </a-entity>
+    <a-entity id="light-modern-2" gltf-model="#asset-light-modern" position="3.909 5.942 -5" scale="0.5 0.5 0.5">
+      <a-light type="point" intensity="0.6" distance="10" decay="2" color="#FFDDAA"></a-light>
+    </a-entity>
+    <a-entity id="light-modern-3" gltf-model="#asset-light-modern" position="-4.19 5.942 7" scale="0.5 0.5 0.5">
+      <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
+    </a-entity>
+    <a-entity id="light-modern-4" gltf-model="#asset-light-modern" position="3.909 5.942 7" scale="0.5 0.5 0.5">
+      <a-light type="point" intensity="0.4" distance="8" decay="2" color="#FFDDAA"></a-light>
+    </a-entity>
+    <a-entity id="light-modern-5" gltf-model="#asset-light-modern" position="-0.122 5.942 1" scale="1 1 1">
+      <a-light type="point" intensity="0.7" distance="12" decay="2" color="#FFDDAA"></a-light>
+    </a-entity>
 
-      <!-- Escaliers anciens -->
-<a-entity id="escalier-old-droit-bas" gltf-model="assets/StairsOld.glb" position="6.311 -0.08 -0.50372" scale="0.32 0.25 0.25" rotation="1.0300000000000002 -90 0.61" visible=""></a-entity>
-<a-entity id="escalier-old-droit-haut" gltf-model="assets/StairsOld.glb" position="6.302 -0.1 -1.83147" scale="-0.32 0.25 0.25" rotation="1.0300000000000002 -90 0.61" visible=""></a-entity>
+    <!-- Lumières anciennes (style vintage) -->
+    <a-entity id="light-old" gltf-model="#asset-light-old" position="-4.19 4.05 -5" scale="2 2 2" visible="false">
+      <a-light type="point" intensity="2" distance="5" decay="2" color="#FFD700"></a-light>
+    </a-entity>
+    <a-entity id="light-old-2" gltf-model="#asset-light-old" position="3.909 4.05 -5" scale="2 2 2" visible="false">
+      <a-light type="point" intensity="2" distance="5" decay="2" color="#FFD700"></a-light>
+    </a-entity>
+    <a-entity id="light-old-3" gltf-model="#asset-light-old" position="-4.19 4.05 7" scale="2 2 2" visible="false">
+      <a-light type="point" intensity="1.8" distance="4" decay="2" color="#FFD700"></a-light>
+    </a-entity>
+    <a-entity id="light-old-4" gltf-model="#asset-light-old" position="3.909 4.05 7" scale="2 2 2" visible="false">
+      <a-light type="point" intensity="1.8" distance="4" decay="2" color="#FFD700"></a-light>
+    </a-entity>
+    <a-entity id="light-old-5" gltf-model="#asset-light-old" position="-0.122 4.05 1" scale="2 2 2" visible="false">
+      <a-light type="point" intensity="2.5" distance="6" decay="2" color="#FFD700"></a-light>
+    </a-entity>
 
-<a-entity id="escalier-old-gauche-bas" gltf-model="assets/StairsOld.glb" position="-6.302 -0.1 -0.51058" scale="-0.32 0.25 0.25" rotation="1.0300000000000002 90 0.61" visible=""></a-entity>
-<a-entity id="escalier-old-gauche-haut" gltf-model="assets/StairsOld.glb" position="-6.302 -0.08 -1.86841" scale="0.32 0.25 0.25" rotation="1.0300000000000002 90 0.61" visible=""></a-entity>
+
+    <a-plane id="sol-principal" src="#tex-sol-modern" repeat="8 8" position="0 0 1.1" rotation="-90 0 0" width="21"
+      height="21.800" roughness="0.5" metalness="0.1"></a-plane>
+    <a-plane id="plafond" src="#tex-plafond-modern" repeat="8 8" position="0 6 1.278" rotation="90 0 0" width="21"
+      height="21.800"></a-plane>
+
+    <a-box id="mur-fond" color="#B1B0AE" position="0 4 -9.70" width="20" height="8" depth="0.5"></a-box>
+    <a-box id="mur-gauche" color="#B1B0AE" position="-10 4 0" rotation="0 90 0" width="20" height="8"
+      depth="0.5"></a-box>
+    <a-box id="mur-droit" color="#B1B0AE" position="10 4 0" rotation="0 90 0" width="20" height="8" depth="0.5"></a-box>
+
+    <a-entity id="escalier-droit-bas" gltf-model="#asset-stairs-modern" position="6.302 -0.08 -0.32"
+      scale="0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
+    <a-entity id="escalier-droit-haut" gltf-model="#asset-stairs-modern" position="6.302 -0.10 -1.97"
+      scale="-0.32 0.25 0.25" rotation="1.03 -90 0.61"></a-entity>
+    <a-box id="mur-stairs-d-1" color="#B1B0AE" position="7.49 4 6.19" rotation="0 90 0" width="11.61" height="8"
+      depth="3"></a-box>
+    <a-box id="mur-stairs-d-2" color="#B1B0AE" position="7.99 4 -6.73" rotation="0 90 0" width="8" height="8"
+      depth="4"></a-box>
+
+    <a-entity id="escalier-gauche-bas" gltf-model="#asset-stairs-modern" position="-6.302 -0.10 -0.37"
+      scale="-0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
+    <a-entity id="escalier-gauche-haut" gltf-model="#asset-stairs-modern" position="-6.302 -0.08 -2.00"
+      scale="0.32 0.25 0.25" rotation="1.03 90 0.61"></a-entity>
+    <a-box id="mur-stairs-g-1" color="#B1B0AE" position="-7.49 4 6.19" rotation="0 90 0" width="11.61" height="8"
+      depth="3"></a-box>
+    <a-box id="mur-stairs-g-2" color="#B1B0AE" position="-7.99 4 -6.73" rotation="0 90 0" width="8" height="8"
+      depth="4"></a-box>
+
+    <!-- Escaliers anciens -->
+    <a-entity id="escalier-old-droit-bas" gltf-model="#asset-stairs-old" position="6.311 -0.08 -0.50372"
+      scale="0.32 0.25 0.25" rotation="1.03 -90 0.61" visible="false"></a-entity>
+    <a-entity id="escalier-old-droit-haut" gltf-model="#asset-stairs-old" position="6.302 -0.1 -1.83147"
+      scale="-0.32 0.25 0.25" rotation="1.03 -90 0.61" visible="false"></a-entity>
+    <a-entity id="escalier-old-gauche-bas" gltf-model="#asset-stairs-old" position="-6.302 -0.1 -0.51058"
+      scale="-0.32 0.25 0.25" rotation="1.03 90 0.61" visible="false"></a-entity>
+    <a-entity id="escalier-old-gauche-haut" gltf-model="#asset-stairs-old" position="-6.302 -0.08 -1.86841"
+      scale="0.32 0.25 0.25" rotation="1.03 90 0.61" visible="false"></a-entity>
 
 
-<a-image class="elevator-changeable" src="#tex-elevator-modern" position="5.989 1.782 4.345" rotation="0 -90 0" width="4" height="5" transparent="true" material="" geometry="width: 3; height: 4">
-</a-image>
+    <a-image class="elevator-changeable" src="#tex-elevator-modern" position="5.989 1.782 4.345" rotation="0 -90 0"
+      width="4" height="5" transparent="true" material="" geometry="width: 3; height: 4">
+    </a-image>
 
-<a-image class="elevator-changeable" src="#tex-elevator-modern" position="-5.89 1.7815 4.34474" rotation="0 90 0" width="4" height="5" transparent="true" material="" geometry="width: 3; height: 4">
-</a-image>
+    <a-image class="elevator-changeable" src="#tex-elevator-modern" position="-5.89 1.7815 4.34474" rotation="0 90 0"
+      width="4" height="5" transparent="true" material="" geometry="width: 3; height: 4">
+    </a-image>
 
-<a-image class="carpet-changeable" src="#tex-carpet-modern" position="0 0.02 2.88814" rotation="-90 90 0" width="6" height="4" transparent="true" material="" geometry="" scale="2 2 2">
-</a-image>
+    <a-image class="carpet-changeable" src="#tex-carpet-modern" position="0 0.02 2.88814" rotation="-90 90 0" width="6"
+      height="4" transparent="true" material="" geometry="" scale="2 2 2">
+    </a-image>
 
-<!-- Horloges -->
-<a-image id="horloge-moderne" src="#tex-clock-modern" position="0 3.858 -9.446" width="1.5" height="1.5" transparent="true" visible="" material="" geometry="">
-</a-image>
-<a-image id="horloge-old" src="#tex-clock-old" position="0 3.858 -9.446" width="1.5" height="1.5" transparent="true" visible="false" material="" geometry="">
-</a-image>
+    <!-- Horloges -->
+    <a-image id="horloge-moderne" src="#tex-clock-modern" position="0 3.858 -9.446" width="1.5" height="1.5"
+      transparent="true" visible="" material="" geometry="">
+    </a-image>
+    <a-image id="horloge-old" src="#tex-clock-old" position="0 3.858 -9.446" width="1.5" height="1.5" transparent="true"
+      visible="false" material="" geometry="">
+    </a-image>
 
-      <a-entity id="entrance-modern" gltf-model="#asset-entrance-modern" position="-6.4 0.3165 4.238" rotation="0 90 0" scale="1 1.4 1.06"></a-entity>
+    <a-entity id="entrance-modern" gltf-model="#asset-entrance-modern" position="-6.4 0.3165 4.238" rotation="0 90 0"
+      scale="1 1.4 1.06"></a-entity>
+    <a-entity id="entrance-old" gltf-model="#asset-entrance-old" position="-6.4 0.3165 4.238" rotation="0 90 0"
+      scale="1 1.4 1.06" visible="false"></a-entity>
 
-      <a-plane id="decor-exterieur" src="#tex-mount-modern" position="0 -20 40" rotation="0 180 0" width="100" height="60" material="shader: flat; fog: false"></a-plane>
-      <a-box position="0 4 5" width="30" height="10" depth="1" color="#333" side="back" visible="false"></a-box>
+    <a-plane id="decor-exterieur" src="#tex-mount-modern" position="0 -20 40" rotation="0 180 0" width="100" height="60"
+      material="shader: flat; fog: false"></a-plane>
+    <a-box position="0 4 5" width="30" height="10" depth="1" color="#333" side="back" visible="false"></a-box>
 
-      <a-entity id="le-bureau-modern" gltf-model="#asset-desk-modern" position="-0.088 0.891 -7.163" scale="0.04 0.04 0.05" visible="true"></a-entity>
-<a-entity id="le-bureau-old" gltf-model="assets/DeskOld.glb" position="-0.088 -0.03737 -6.18852" scale="1 1.2 0.8" visible=""></a-entity>      <a-entity id="la-sonnette" position="-0.122 1.109 -5.503" time-travel="startModern: true">
-        <a-entity gltf-model="#asset-bell" scale="10 10 10"></a-entity>
-        <a-sphere class="clickable" radius="0.15" material="opacity: 0; transparent: true" position="0 0.1 0"></a-sphere>
-      </a-entity>
+    <a-entity id="le-bureau-modern" gltf-model="#asset-desk-modern" position="-0.088 0.891 -7.163"
+      scale="0.04 0.04 0.05" visible="true"></a-entity>
+    <a-entity id="le-bureau-old" gltf-model="assets/DeskOld.glb" position="-0.088 -0.03737 -6.18852" scale="1 1.2 0.8"
+      visible=""></a-entity>
+    <a-entity id="la-sonnette" position="-0.122 1.109 -5.503" time-travel="startModern: true">
 
-      <a-entity id="groupe-elements-modernes" visible="true">
-        <a-entity id="periph-gauche" gltf-model="#asset-periph" position="-1.166 -1.692 -6.640" scale="3 3 3" rotation="0 180 0"></a-entity>
-        <a-entity id="imac-gauche" gltf-model="#asset-imac" position="-1.541 1.12 -5.828" scale="0.3 0.3 0.3" rotation="0 -15.65 0"></a-entity>
-        <a-entity id="periph-droit" gltf-model="#asset-periph" position="1.294 -1.692 -6.640" scale="3 3 3" rotation="0 180 0"></a-entity>
-        <a-entity id="imac-droit" gltf-model="#asset-imac" position="1.319 1.12 -5.828" scale="0.3 0.3 0.3" rotation="0 12.88 0"></a-entity>
-      </a-entity>
+      <a-entity gltf-model="#asset-bell" scale="10 10 10"></a-entity>
 
-      <a-entity id="groupe-elements-anciens" visible="false">
-<a-entity id="book-gauche" gltf-model="assets/Book.glb" position="-1.16529 1.12451 -5.69059" scale="0.3 0.3 0.3" rotation="0 -99.05351658001184 0"></a-entity>
-<a-entity id="book-droit" gltf-model="assets/Book.glb" position="0.975 1.12451 -5.66952" scale="0.3 0.3 0.3" rotation="0 99.05351658001184 0"></a-entity>
-<a-entity id="pen-gauche" gltf-model="assets/Pen.glb" position="-0.66722 1.122 -5.56358" scale="1.5 1.5 1.5" rotation="0 100 0"></a-entity>
-<a-entity id="pen-droit" gltf-model="assets/Pen.glb" position="1.42946 1.122 -5.77499" scale="1.5 1.5 1.5" rotation="0 119.99999999999999 0"></a-entity>
-      </a-entity>
+      <a-sphere class="clickable" radius="0.15" material="opacity: 0; transparent: true" position="0 0.1 0"></a-sphere>
 
-      <!-- Système de distorsion temporelle -->
-      <a-entity id="distortion-system" time-distortion></a-entity>
+      <a-sphere position="0 0.3 0" radius="0.02" color="#FFFFFF" material="shader: flat; opacity: 0.8"
+        animation="property: position; from: 0 0.3 0; to: 0 0.35 0; dir: alternate; loop: true; dur: 1000; easing: easeInOutSine"
+        animation__scale="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dir: alternate; loop: true; dur: 1000; easing: easeInOutSine">
+      </a-sphere>
+
+    </a-entity>
+
+    <a-entity id="groupe-elements-modernes" visible="true">
+      <a-entity id="periph-gauche" gltf-model="#asset-periph" position="-1.166 -1.692 -6.640" scale="3 3 3"
+        rotation="0 180 0"></a-entity>
+      <a-entity id="imac-gauche" gltf-model="#asset-imac" position="-1.541 1.12 -5.828" scale="0.3 0.3 0.3"
+        rotation="0 -15.65 0"></a-entity>
+      <a-entity id="periph-droit" gltf-model="#asset-periph" position="1.294 -1.692 -6.640" scale="3 3 3"
+        rotation="0 180 0"></a-entity>
+      <a-entity id="imac-droit" gltf-model="#asset-imac" position="1.319 1.12 -5.828" scale="0.3 0.3 0.3"
+        rotation="0 12.88 0"></a-entity>
+    </a-entity>
+
+    <a-entity id="groupe-elements-anciens" visible="false">
+      <a-entity id="book-gauche" gltf-model="assets/Book.glb" position="-1.16529 1.12451 -5.69059" scale="0.3 0.3 0.3"
+        rotation="0 -99.05351658001184 0"></a-entity>
+      <a-entity id="book-droit" gltf-model="assets/Book.glb" position="0.975 1.12451 -5.66952" scale="0.3 0.3 0.3"
+        rotation="0 99.05351658001184 0"></a-entity>
+      <a-entity id="pen-gauche" gltf-model="assets/Pen.glb" position="-0.66722 1.122 -5.56358" scale="1.5 1.5 1.5"
+        rotation="0 100 0"></a-entity>
+      <a-entity id="pen-droit" gltf-model="assets/Pen.glb" position="1.42946 1.122 -5.77499" scale="1.5 1.5 1.5"
+        rotation="0 119.99999999999999 0"></a-entity>
+    </a-entity>
+
+
 
     <a-entity id="camera-rig" position="0 0.5 -2.75">
-        
-        <a-entity camera look-controls wasd-controls>
-           <a-entity 
-             cursor="rayOrigin: mouse" 
-             raycaster="objects: .clickable; interval: 500">
-           </a-entity>
-        </a-entity>
 
-        <a-entity 
-          laser-controls="hand: left" 
-          raycaster="objects: .clickable; far: 5; interval: 500"
-          line="color: red; opacity: 0.75">
+      <a-entity camera look-controls wasd-controls>
+        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable; interval: 500">
         </a-entity>
-
-        <a-entity 
-          laser-controls="hand: right" 
-          raycaster="objects: .clickable; far: 5; interval: 500"
-          line="color: red; opacity: 0.75">
-        </a-entity>
-
       </a-entity>
 
-    </a-scene>
+      <a-entity laser-controls="hand: left" raycaster="objects: .clickable; far: 5; interval: 500"
+        line="color: red; opacity: 0.75">
+      </a-entity>
 
-    <script>
-      document.addEventListener('click', function() {
-        const audio = document.querySelector('#audio-music-modern');
-      }, { once: true });
-    </script>
-  </body>
+      <a-entity laser-controls="hand: right" raycaster="objects: .clickable; far: 5; interval: 500"
+        line="color: red; opacity: 0.75">
+      </a-entity>
+
+    </a-entity>
+
+  </a-scene>
+
+  <script>
+    document.addEventListener('click', function () {
+      const audio = document.querySelector('#audio-music-modern');
+    }, { once: true });
+  </script>
+</body>
+
 </html>
