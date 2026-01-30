@@ -154,6 +154,8 @@
               setVisible('#light-modern-2', toModern);
               setVisible('#light-old', !toModern);
               setVisible('#light-old-2', !toModern);
+              setVisible('#horloge-moderne', toModern);
+              setVisible('#horloge-old', !toModern);
             }},
             // 1.5s - Côté droit (escaliers et murs)
             { delay: 1500, action: () => {
@@ -300,7 +302,9 @@
         <img id="tex-plafond-old" src="assets/PlafondOld.jpg">
 
         <img id="tex-carpet-modern" src="assets/CarpetModern.png">
-<img id="tex-carpet-old" src="assets/CarpetOld.png">
+        <img id="tex-carpet-old" src="assets/CarpetOld.png">
+        <img id="tex-clock-modern" src="assets/ClockModern.png">
+        <img id="tex-clock-old" src="assets/ClockOld.png">
       </a-assets>
 
       <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
@@ -372,6 +376,12 @@
 </a-image>
 
 <a-image class="carpet-changeable" src="#tex-carpet-modern" position="0 0.02 2.88814" rotation="-90 90 0" width="6" height="4" transparent="true" material="" geometry="" scale="2 2 2">
+</a-image>
+
+<!-- Horloges -->
+<a-image id="horloge-moderne" src="#tex-clock-modern" position="0 3.858 -9.446" width="1.5" height="1.5" transparent="true" visible="" material="" geometry="">
+</a-image>
+<a-image id="horloge-old" src="#tex-clock-old" position="0 3.858 -9.446" width="1.5" height="1.5" transparent="true" visible="false" material="" geometry="">
 </a-image>
 
       <a-entity id="entrance-modern" gltf-model="#asset-entrance-modern" position="-6.4 0.3165 4.238" rotation="0 90 0" scale="1 1.4 1.06"></a-entity>
