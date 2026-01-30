@@ -7,26 +7,219 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 
     <script>
+      // Composant pour l'effet de distorsion temporelle
+      AFRAME.registerComponent('time-distortion', {
+        init: function() {
+          this.ring = null;
+        },
+        
+        startEffect: function(duration, onComplete) {
+          const scene = this.el.sceneEl;
+          const cameraRig = document.querySelector('#camera-rig');
+          const camPos = cameraRig.getAttribute('position');
+          
+          // Créer un anneau de distorsion qui tourne
+          this.ring = document.createElement('a-entity');
+          this.ring.setAttribute('position', {x: camPos.x, y: camPos.y + 1, z: camPos.z});
+          
+          // Créer plusieurs anneaux concentriques
+          for (let i = 0; i < 5; i++) {
+            const torus = document.createElement('a-torus');
+            const radius = 2 + i * 1.5;
+            torus.setAttribute('radius', radius);
+            torus.setAttribute('radius-tubular', 0.02 + i * 0.01);
+            torus.setAttribute('segments-radial', 32);
+            torus.setAttribute('segments-tubular', 48);
+            torus.setAttribute('material', {
+              color: i % 2 === 0 ? '#FFD700' : '#FFFFFF',
+              opacity: 0.6 - i * 0.1,
+              transparent: true,
+              shader: 'flat',
+              side: 'double'
+            });
+            torus.setAttribute('rotation', {x: 90, y: 0, z: 0});
+            torus.setAttribute('animation', {
+              property: 'rotation',
+              from: {x: 90, y: 0, z: 0},
+              to: {x: 90, y: 0, z: 360},
+              dur: duration - i * 200,
+              easing: 'easeInOutQuad'
+            });
+            torus.setAttribute('animation__scale', {
+              property: 'scale',
+              from: {x: 0.1, y: 0.1, z: 0.1},
+              to: {x: 1, y: 1, z: 1},
+              dur: duration * 0.3,
+              easing: 'easeOutElastic'
+            });
+            this.ring.appendChild(torus);
+          }
+          
+          scene.appendChild(this.ring);
+          
+          // Animation de contraction à la fin
+          setTimeout(() => {
+            const toruses = this.ring.querySelectorAll('a-torus');
+            toruses.forEach((t, i) => {
+              t.setAttribute('animation__shrink', {
+                property: 'scale',
+                to: {x: 0, y: 0, z: 0},
+                dur: 800,
+                easing: 'easeInQuad',
+                delay: i * 100
+              });
+              t.setAttribute('animation__fade', {
+                property: 'material.opacity',
+                to: 0,
+                dur: 800,
+                easing: 'easeInQuad',
+                delay: i * 100
+              });
+            });
+          }, duration - 1000);
+          
+          // Nettoyer et callback
+          setTimeout(() => {
+            if (this.ring) {
+              this.ring.remove();
+              this.ring = null;
+            }
+            if (onComplete) onComplete();
+          }, duration);
+        }
+      });
+
       AFRAME.registerComponent('time-travel', {
         schema: { startModern: { type: 'boolean', default: true } },
         init: function () {
           this.isModern = this.data.startModern;
+          this.isTransitioning = false;
           this.audioBell = document.querySelector('#audio-bell-ring');
           this.audioModern = document.querySelector('#audio-music-modern');
           this.audioOld = document.querySelector('#audio-music-old');
+          this.distortionSystem = document.querySelector('#distortion-system');
 
           // On lance la scène
-          if (this.el.sceneEl.hasLoaded) { this.updateScene(); } 
-          else { this.el.sceneEl.addEventListener('loaded', () => this.updateScene()); }
+          if (this.el.sceneEl.hasLoaded) { this.updateSceneImmediate(); } 
+          else { this.el.sceneEl.addEventListener('loaded', () => this.updateSceneImmediate()); }
 
           this.el.addEventListener('click', () => {
-            if (this.audioBell) { this.audioBell.currentTime = 0; this.audioBell.play().catch(e=>{}); }
-            this.isModern = !this.isModern;
-            this.updateScene();
+            if (this.isTransitioning) return;
+            this.startTimeTravel();
           });
         },
 
-        updateScene: function () {
+        startTimeTravel: function() {
+          this.isTransitioning = true;
+          const toModern = !this.isModern;
+          const duration = 5000; // 5 secondes
+          
+          // Jouer le son de la cloche
+          if (this.audioBell) { 
+            this.audioBell.currentTime = 0; 
+            this.audioBell.play().catch(e=>{}); 
+          }
+          
+          // Démarrer l'effet de distorsion
+          if (this.distortionSystem) {
+            this.distortionSystem.components['time-distortion'].startEffect(duration, () => {
+              this.isTransitioning = false;
+            });
+          }
+          
+          // Changer les éléments progressivement dans le sens horaire
+          this.transitionElements(toModern, duration);
+        },
+
+        transitionElements: function(toModern, duration) {
+          const self = this;
+          const setSrc = (id, src) => { const el = document.querySelector(id); if(el) el.setAttribute('src', src); };
+          const setColor = (id, color) => { const el = document.querySelector(id); if(el) el.setAttribute('color', color); };
+          const setVisible = (id, viz) => { const el = document.querySelector(id); if(el) el.setAttribute('visible', viz); };
+          
+          // Éléments à changer dans l'ordre horaire (depuis la vue de dessus)
+          // Devant -> Droite -> Derrière -> Gauche
+          const transitionSequence = [
+            // 0s - Bureau et éléments devant
+            { delay: 0, action: () => {
+              setVisible('#le-bureau-modern', toModern);
+              setVisible('#le-bureau-old', !toModern);
+              setVisible('#groupe-elements-modernes', toModern);
+              setVisible('#groupe-elements-anciens', !toModern);
+            }},
+            // 0.8s - Mur du fond et lumières avant
+            { delay: 800, action: () => {
+              setColor('#mur-fond', toModern ? '#B1B0AE' : '#EB97AC');
+              setVisible('#light-modern', toModern);
+              setVisible('#light-modern-2', toModern);
+              setVisible('#light-old', !toModern);
+              setVisible('#light-old-2', !toModern);
+            }},
+            // 1.5s - Côté droit (escaliers et murs)
+            { delay: 1500, action: () => {
+              setColor('#mur-droit', toModern ? '#B1B0AE' : '#EB97AC');
+              setColor('#mur-stairs-d-1', toModern ? '#B1B0AE' : '#EB97AC');
+              setColor('#mur-stairs-d-2', toModern ? '#B1B0AE' : '#EB97AC');
+              setVisible('#escalier-droit-bas', toModern);
+              setVisible('#escalier-droit-haut', toModern);
+              setVisible('#escalier-old-droit-bas', !toModern);
+              setVisible('#escalier-old-droit-haut', !toModern);
+            }},
+            // 2.2s - Plafond et sol
+            { delay: 2200, action: () => {
+              setSrc('#sol-principal', toModern ? '#tex-sol-modern' : '#tex-sol-old');
+              setSrc('#plafond', toModern ? '#tex-plafond-modern' : '#tex-plafond-old');
+              // Ascenseurs et tapis
+              document.querySelectorAll('.elevator-changeable').forEach(el => {
+                el.setAttribute('src', toModern ? '#tex-elevator-modern' : '#tex-elevator-old');
+              });
+              document.querySelectorAll('.carpet-changeable').forEach(el => {
+                el.setAttribute('src', toModern ? '#tex-carpet-modern' : '#tex-carpet-old');
+              });
+            }},
+            // 3s - Arrière et lumières arrière
+            { delay: 3000, action: () => {
+              setSrc('#decor-exterieur', toModern ? '#tex-mount-modern' : '#tex-mount-old');
+              setVisible('#light-modern-3', toModern);
+              setVisible('#light-modern-4', toModern);
+              setVisible('#light-old-3', !toModern);
+              setVisible('#light-old-4', !toModern);
+            }},
+            // 3.8s - Côté gauche (escaliers et murs)
+            { delay: 3800, action: () => {
+              setColor('#mur-gauche', toModern ? '#B1B0AE' : '#EB97AC');
+              setColor('#mur-stairs-g-1', toModern ? '#B1B0AE' : '#EB97AC');
+              setColor('#mur-stairs-g-2', toModern ? '#B1B0AE' : '#EB97AC');
+              setVisible('#escalier-gauche-bas', toModern);
+              setVisible('#escalier-gauche-haut', toModern);
+              setVisible('#escalier-old-gauche-bas', !toModern);
+              setVisible('#escalier-old-gauche-haut', !toModern);
+            }},
+            // 4.5s - Lumière centrale et finalisation
+            { delay: 4500, action: () => {
+              setVisible('#light-modern-5', toModern);
+              setVisible('#light-old-5', !toModern);
+              
+              // Musique
+              if (toModern) {
+                if(self.audioOld) self.audioOld.pause();
+                if(self.audioModern) self.audioModern.play().catch(e=>{});
+              } else {
+                if(self.audioModern) self.audioModern.pause();
+                if(self.audioOld) self.audioOld.play().catch(e=>{});
+              }
+              
+              self.isModern = toModern;
+            }}
+          ];
+          
+          // Exécuter chaque étape avec son délai
+          transitionSequence.forEach(step => {
+            setTimeout(step.action, step.delay);
+          });
+        },
+
+        updateSceneImmediate: function () {
           const isModern = this.isModern;
           const setSrc = (id, src) => { const el = document.querySelector(id); if(el) el.setAttribute('src', src); };
           const setColor = (id, color) => { const el = document.querySelector(id); if(el) el.setAttribute('color', color); };
@@ -43,28 +236,25 @@
           // 2. Visibilité
           setVisible('#le-bureau-modern', isModern);
           setVisible('#le-bureau-old', !isModern);
-          setVisible('#groupe-elements-modernes', isModern); // Cache les ordis
-          setVisible('#groupe-elements-anciens', !isModern); // Affiche les livres en mode ancien
+          setVisible('#groupe-elements-modernes', isModern);
+          setVisible('#groupe-elements-anciens', !isModern);
           
           // Escaliers
           ['#escalier-droit-bas', '#escalier-droit-haut', '#escalier-gauche-bas', '#escalier-gauche-haut'].forEach(id => setVisible(id, isModern));
           ['#escalier-old-droit-bas', '#escalier-old-droit-haut', '#escalier-old-gauche-bas', '#escalier-old-gauche-haut'].forEach(id => setVisible(id, !isModern));
           
-          // Cache les lumières modernes dans le passé
+          // Lumières
           ['#light-modern', '#light-modern-2', '#light-modern-3', '#light-modern-4', '#light-modern-5'].forEach(id => setVisible(id, isModern));
-          
-          // Affiche les lumières anciennes dans le passé
           ['#light-old', '#light-old-2', '#light-old-3', '#light-old-4', '#light-old-5'].forEach(id => setVisible(id, !isModern));
-          // GESTION DES ASCENSEURS
-const elevators = document.querySelectorAll('.elevator-changeable');
-elevators.forEach(el => {
-  el.setAttribute('src', isModern ? '#tex-elevator-modern' : '#tex-elevator-old');
-});
-// GESTION DES TAPIS
-const carpets = document.querySelectorAll('.carpet-changeable');
-carpets.forEach(el => {
-  el.setAttribute('src', isModern ? '#tex-carpet-modern' : '#tex-carpet-old');
-});
+          
+          // Ascenseurs et tapis
+          document.querySelectorAll('.elevator-changeable').forEach(el => {
+            el.setAttribute('src', isModern ? '#tex-elevator-modern' : '#tex-elevator-old');
+          });
+          document.querySelectorAll('.carpet-changeable').forEach(el => {
+            el.setAttribute('src', isModern ? '#tex-carpet-modern' : '#tex-carpet-old');
+          });
+
           // 3. Musique
           if (isModern) {
              if(this.audioOld) this.audioOld.pause();
@@ -208,6 +398,9 @@ carpets.forEach(el => {
 <a-entity id="pen-gauche" gltf-model="assets/Pen.glb" position="-0.66722 1.122 -5.56358" scale="1.5 1.5 1.5" rotation="0 100 0"></a-entity>
 <a-entity id="pen-droit" gltf-model="assets/Pen.glb" position="1.42946 1.122 -5.77499" scale="1.5 1.5 1.5" rotation="0 119.99999999999999 0"></a-entity>
       </a-entity>
+
+      <!-- Système de distorsion temporelle -->
+      <a-entity id="distortion-system" time-distortion></a-entity>
 
     <a-entity id="camera-rig" position="0 0.5 -2.75">
         
