@@ -209,10 +209,27 @@ carpets.forEach(el => {
 <a-entity id="pen-droit" gltf-model="assets/Pen.glb" position="1.42946 1.122 -5.77499" scale="1.5 1.5 1.5" rotation="0 119.99999999999999 0"></a-entity>
       </a-entity>
 
-      <a-entity id="camera-rig" position="0 0.5 -2.75">
+    <a-entity id="camera-rig" position="0 1.5 -2.75">
+        
         <a-entity camera look-controls wasd-controls>
-           <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+           <a-entity 
+             cursor="rayOrigin: mouse" 
+             raycaster="objects: .clickable; interval: 500">
+           </a-entity>
         </a-entity>
+
+        <a-entity 
+          laser-controls="hand: left" 
+          raycaster="objects: .clickable; far: 5; interval: 500"
+          line="color: red; opacity: 0.75">
+        </a-entity>
+
+        <a-entity 
+          laser-controls="hand: right" 
+          raycaster="objects: .clickable; far: 5; interval: 500"
+          line="color: red; opacity: 0.75">
+        </a-entity>
+
       </a-entity>
 
     </a-scene>
